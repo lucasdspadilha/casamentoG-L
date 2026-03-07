@@ -126,12 +126,12 @@ export function Ceremony() {
           </p>
           <div className="flex flex-col gap-0 border-l border-sage-light/20 pl-6">
             {[
-              { time: '10h00', event: 'Recepção dos convidados' },
-              { time: '10h30', event: 'Cerimônia civil' },
-              { time: '11h30', event: 'Coquetel & fotos' },
-              { time: '13h00', event: 'Almoço' },
+              { time: '10h30', event: 'Recepção dos convidados' },
+              { time: '11h00', event: 'Cerimônia civil' },
+              { time: '12h00', event: 'Coquetel & fotos' },
+              { time: '13h30', event: 'Almoço' },
               { time: '15h00', event: 'Bolo & brinde' },
-              { time: '16h00', event: 'Festa' },
+              { time: '16h30', event: 'Fim da Festa' },
             ].map((item, i) => (
               <div key={i} className="relative flex items-start gap-4 pb-6">
                 <div className="absolute -left-[25px] top-1.5 w-2 h-2 rounded-full bg-sage border-2 border-charcoal" />

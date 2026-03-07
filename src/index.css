@@ -15,13 +15,18 @@
   --font-sans: "Jost", system-ui, sans-serif;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 }
 
-html {
+html,
+body {
+  width: 100%;
+  min-height: 100vh;
   scroll-behavior: smooth;
 }
 
@@ -31,6 +36,10 @@ body {
   color: var(--color-charcoal);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
 }
 
 ::selection {
