@@ -22,12 +22,12 @@ function InfoCard({ icon, label, value, sub }: InfoCardProps) {
       <div className="w-12 h-12 rounded-full bg-sage/10 flex items-center justify-center text-sage">
         {icon}
       </div>
-      <p className="font-sans text-[10px] tracking-[0.25em] uppercase text-charcoal-light/60">
+      <p className="font-sans text-[10px] tracking-[0.25em] uppercase text-charcoal-light/90">
         {label}
       </p>
-      <p className="font-serif text-lg font-medium text-charcoal">{value}</p>
+      <p className="font-serif text-lg font-medium text-cream/60">{value}</p>
       {sub && (
-        <p className="font-sans text-xs text-charcoal-light/70">{sub}</p>
+        <p className="font-sans text-xs text-charcoal-light/90">{sub}</p>
       )}
     </motion.div>
   )
