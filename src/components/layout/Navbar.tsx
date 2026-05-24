@@ -41,8 +41,8 @@ export function Navbar() {
             duration={800}
             className="cursor-pointer"
           >
-            <span className="font-serif text-xl font-light tracking-widest text-charcoal select-none">
-              G <span className="text-sage-light mx-1">&</span> L
+            <span className="font-serif text-xl font-normal tracking-widest text-charcoal select-none">
+              G <span className="text-sage-light">&</span> L
             </span>
           </Link>
 

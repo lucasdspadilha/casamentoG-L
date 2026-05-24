@@ -21,6 +21,8 @@ function CardImage({ src, emoji }: { src: string; emoji: string }) {
     <img
       src={src}
       alt=""
+      loading="lazy"
+      decoding="async"
       onError={() => setError(true)}
       className="w-full h-full object-cover"
     />
@@ -74,9 +76,9 @@ export function OurStory() {
                         isRight ? 'md:flex-row' : 'md:flex-row-reverse'
                       } flex-col`}
                     >
-                      {/* Image — outer edge, desktop only */}
+                      {/* Image — full width on mobile (top), outer edge on desktop */}
                       {event.img !== undefined && (
-                        <div className="hidden md:block w-36 shrink-0">
+                        <div className="w-full h-40 md:w-36 md:h-auto shrink-0">
                           <CardImage src={event.img} emoji={event.emoji} />
                         </div>
                       )}

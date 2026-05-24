@@ -1,234 +1,653 @@
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { Send, CheckCircle } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Send, CheckCircle, Search, ArrowLeft, Users, X } from 'lucide-react'
 import { SectionTitle } from '../ui/SectionTitle'
+import { searchGroups, findGroupById } from '../../lib/guests'
+import {
+  getRsvpByGroup,
+  saveRsvp,
+  type RsvpEntry,
+  type PreviousVersion,
+} from '../../lib/rsvp'
+import { celebrate } from '../../lib/confetti'
+import { formatPhone, isValidPhone } from '../../lib/phone'
+import { useEscapeKey } from '../../lib/useEscapeKey'
+import type { GuestGroup } from '../../data/guestGroups'
 
-interface FormData {
-  name: string
-  email: string
+type Step = 'search' | 'group' | 'details' | 'success'
+
+interface Details {
   phone: string
-  guests: string
-  attending: 'yes' | 'no' | ''
-  dietary: string
   message: string
 }
 
-const initialForm: FormData = {
-  name: '',
-  email: '',
-  phone: '',
-  guests: '1',
-  attending: '',
-  dietary: '',
-  message: '',
-}
+const emptyDetails: Details = { phone: '', message: '' }
 
 export function Rsvp() {
-  const [form, setForm] = useState<FormData>(initialForm)
-  const [submitted, setSubmitted] = useState(false)
+  const [step, setStep] = useState<Step>('search')
+  const [query, setQuery] = useState('')
+  const [groupId, setGroupId] = useState<string | null>(null)
+  const [attending, setAttending] = useState<'yes' | 'no' | ''>('')
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [plusOneName, setPlusOneName] = useState('')
+  const [details, setDetails] = useState<Details>(emptyDetails)
+  const [pendingEntry, setPendingEntry] = useState<RsvpEntry | null>(null)
+  const [existingEntry, setExistingEntry] = useState<RsvpEntry | null>(null)
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+  const results = useMemo(() => searchGroups(query), [query])
+  const group = groupId ? findGroupById(groupId) : undefined
+
+  function pickGroup(g: GuestGroup) {
+    setGroupId(g.id)
+    // Sempre começa limpo — sem reaproveitar dados de RSVPs anteriores.
+    setAttending('')
+    setSelectedIds(g.guests.filter((x) => !x.isPlusOnePlaceholder).map((x) => x.id))
+    setPlusOneName('')
+    setDetails(emptyDetails)
+    setStep('group')
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // TODO: integrate with backend / email service
-    setSubmitted(true)
-  }
-
-  if (submitted) {
-    return (
-      <section id="rsvp" className="py-24 md:py-32 px-6 bg-cream">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6 }}
-          className="max-w-md mx-auto flex flex-col items-center text-center gap-6"
-        >
-          <CheckCircle size={48} className="text-sage" />
-          <h2 className="font-serif text-4xl font-light text-charcoal">
-            {form.attending === 'yes' ? 'Até lá! 🌿' : 'Sentiremos sua falta!'}
-          </h2>
-          <p className="font-sans text-sm text-charcoal-light leading-relaxed">
-            {form.attending === 'yes'
-              ? `Obrigado, ${form.name}! Sua confirmação foi recebida. Mal podemos esperar para celebrar com você!`
-              : `Obrigado por nos avisar, ${form.name}. Estaremos pensando em você nesse dia especial.`}
-          </p>
-          <button
-            onClick={() => { setSubmitted(false); setForm(initialForm) }}
-            className="font-sans text-xs tracking-[0.15em] uppercase text-sage border border-sage-light/40 px-6 py-3 rounded-full hover:bg-sage hover:text-cream transition-all duration-300 cursor-pointer"
-          >
-            Enviar nova resposta
-          </button>
-        </motion.div>
-      </section>
+  function toggleGuest(id: string) {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     )
+  }
+
+  function goToDetails() {
+    if (!group) return
+    if (attending === 'no') {
+      submit('no', [])
+      return
+    }
+    setStep('details')
+  }
+
+  function buildEntry(
+    finalAttending: 'yes' | 'no',
+    finalIds: string[]
+  ): RsvpEntry {
+    const placeholder = group!.guests.find((g) => g.isPlusOnePlaceholder)
+    const hasPlusOne =
+      placeholder && finalIds.includes(placeholder.id) && plusOneName.trim().length > 0
+    return {
+      groupId: group!.id,
+      attending: finalAttending,
+      attendingGuestIds: finalAttending === 'yes' ? finalIds : [],
+      plusOneName: hasPlusOne ? plusOneName.trim() : undefined,
+      phone: details.phone.trim() || undefined,
+      message: details.message.trim() || undefined,
+      submittedAt: new Date().toISOString(),
+    }
+  }
+
+  function submit(finalAttending: 'yes' | 'no', finalIds: string[]) {
+    if (!group) return
+    const entry = buildEntry(finalAttending, finalIds)
+    const existing = getRsvpByGroup(group.id)
+    if (existing) {
+      // Já existe RSVP — pede confirmação antes de sobrescrever.
+      setPendingEntry(entry)
+      setExistingEntry(existing)
+      return
+    }
+    saveRsvp(entry)
+    setStep('success')
+  }
+
+  function confirmOverwrite() {
+    if (!pendingEntry || !existingEntry) return
+    const previousVersion: PreviousVersion = {
+      attending: existingEntry.attending,
+      attendingGuestIds: existingEntry.attendingGuestIds,
+      plusOneName: existingEntry.plusOneName,
+      phone: existingEntry.phone,
+      message: existingEntry.message,
+      submittedAt: existingEntry.submittedAt,
+    }
+    saveRsvp({
+      ...pendingEntry,
+      editCount: (existingEntry.editCount ?? 0) + 1,
+      previousVersions: [...(existingEntry.previousVersions ?? []), previousVersion],
+    })
+    setPendingEntry(null)
+    setExistingEntry(null)
+    setStep('success')
+  }
+
+  function cancelOverwrite() {
+    setPendingEntry(null)
+    setExistingEntry(null)
   }
 
   return (
     <section id="rsvp" className="py-24 md:py-32 px-6 bg-cream">
       <div className="max-w-xl mx-auto">
         <SectionTitle
-          label="Até 10 de Agosto de 2025"
+          label="Até 10 de Agosto de 2026"
           title="Confirmar Presença"
-          subtitle="Por favor confirme sua presença para que possamos planejar tudo com carinho."
+          subtitle="Comece digitando seu nome ou o da família que vocês fazem parte."
         />
 
-        <motion.form
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7, delay: 0.2 }}
-          onSubmit={handleSubmit}
-          className="mt-12 flex flex-col gap-5"
-        >
-          {/* Name */}
-          <div className="flex flex-col gap-1.5">
-            <label className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-light">
-              Nome completo *
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              placeholder="Seu nome"
-              className="w-full bg-white border border-sage-light/30 rounded-xl px-4 py-3 font-sans text-sm text-charcoal placeholder-charcoal/30 focus:outline-none focus:border-sage transition-colors"
+        <AnimatePresence mode="wait">
+          {step === 'search' && (
+            <SearchStep
+              key="search"
+              query={query}
+              setQuery={setQuery}
+              results={results}
+              onPick={pickGroup}
             />
-          </div>
-
-          {/* Email + Phone */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-light">
-                E-mail *
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                required
-                placeholder="seu@email.com"
-                className="w-full bg-white border border-sage-light/30 rounded-xl px-4 py-3 font-sans text-sm text-charcoal placeholder-charcoal/30 focus:outline-none focus:border-sage transition-colors"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-light">
-                WhatsApp
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={form.phone}
-                onChange={handleChange}
-                placeholder="(11) 9 0000-0000"
-                className="w-full bg-white border border-sage-light/30 rounded-xl px-4 py-3 font-sans text-sm text-charcoal placeholder-charcoal/30 focus:outline-none focus:border-sage transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* Attending */}
-          <div className="flex flex-col gap-2">
-            <label className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-light">
-              Você vai comparecer? *
-            </label>
-            <div className="flex gap-3">
-              {[
-                { value: 'yes', label: 'Sim, com certeza! 🥂' },
-                { value: 'no', label: 'Não poderei ir' },
-              ].map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setForm((p) => ({ ...p, attending: opt.value as 'yes' | 'no' }))}
-                  className={`flex-1 font-sans text-xs py-3 rounded-xl border transition-all duration-200 cursor-pointer ${
-                    form.attending === opt.value
-                      ? 'bg-sage text-cream border-sage'
-                      : 'bg-white text-charcoal-light border-sage-light/30 hover:border-sage'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Guests — only if attending */}
-          {form.attending === 'yes' && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="flex flex-col gap-1.5"
-            >
-              <label className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-light">
-                Número de acompanhantes (incluindo você)
-              </label>
-              <select
-                name="guests"
-                value={form.guests}
-                onChange={handleChange}
-                className="w-full bg-white border border-sage-light/30 rounded-xl px-4 py-3 font-sans text-sm text-charcoal focus:outline-none focus:border-sage transition-colors appearance-none"
-              >
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <option key={n} value={n}>
-                    {n} {n === 1 ? 'pessoa' : 'pessoas'}
-                  </option>
-                ))}
-              </select>
-            </motion.div>
           )}
-
-          {/* Dietary */}
-          {form.attending === 'yes' && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="flex flex-col gap-1.5"
-            >
-              <label className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-light">
-                Restrições alimentares
-              </label>
-              <input
-                type="text"
-                name="dietary"
-                value={form.dietary}
-                onChange={handleChange}
-                placeholder="Ex.: vegetariano, sem glúten, alergia a frutos do mar..."
-                className="w-full bg-white border border-sage-light/30 rounded-xl px-4 py-3 font-sans text-sm text-charcoal placeholder-charcoal/30 focus:outline-none focus:border-sage transition-colors"
-              />
-            </motion.div>
-          )}
-
-          {/* Message */}
-          <div className="flex flex-col gap-1.5">
-            <label className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-light">
-              Mensagem para os noivos (opcional)
-            </label>
-            <textarea
-              name="message"
-              value={form.message}
-              onChange={handleChange}
-              rows={3}
-              placeholder="Deixe um recado especial..."
-              className="w-full bg-white border border-sage-light/30 rounded-xl px-4 py-3 font-sans text-sm text-charcoal placeholder-charcoal/30 focus:outline-none focus:border-sage transition-colors resize-none"
+          {step === 'group' && group && (
+            <GroupStep
+              key="group"
+              group={group}
+              attending={attending}
+              setAttending={setAttending}
+              selectedIds={selectedIds}
+              toggleGuest={toggleGuest}
+              plusOneName={plusOneName}
+              setPlusOneName={setPlusOneName}
+              onBack={() => setStep('search')}
+              onContinue={goToDetails}
             />
-          </div>
-
-          <button
-            type="submit"
-            disabled={!form.attending || !form.name || !form.email}
-            className="mt-2 w-full flex items-center justify-center gap-2 bg-sage text-cream font-sans text-xs tracking-[0.2em] uppercase py-4 rounded-full hover:bg-sage-dark transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-          >
-            <Send size={14} />
-            Confirmar
-          </button>
-        </motion.form>
+          )}
+          {step === 'details' && group && (
+            <DetailsStep
+              key="details"
+              details={details}
+              setDetails={setDetails}
+              onBack={() => setStep('group')}
+              onSubmit={() => submit('yes', selectedIds)}
+            />
+          )}
+          {step === 'success' && group && (
+            <SuccessStep
+              key="success"
+              group={group}
+              attending={attending === 'no' ? 'no' : 'yes'}
+              count={selectedIds.length}
+            />
+          )}
+        </AnimatePresence>
       </div>
+
+      <AnimatePresence>
+        {existingEntry && group && (
+          <OverwriteDialog
+            group={group}
+            existing={existingEntry}
+            onCancel={cancelOverwrite}
+            onConfirm={confirmOverwrite}
+          />
+        )}
+      </AnimatePresence>
     </section>
+  )
+}
+
+function OverwriteDialog({
+  group,
+  existing,
+  onCancel,
+  onConfirm,
+}: {
+  group: GuestGroup
+  existing: RsvpEntry
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  useEscapeKey(onCancel)
+
+  const prevNames = existing.attendingGuestIds
+    .map((id) => {
+      const g = group.guests.find((x) => x.id === id)
+      if (!g) return null
+      if (g.isPlusOnePlaceholder) return existing.plusOneName || 'Acompanhante'
+      return g.name
+    })
+    .filter(Boolean) as string[]
+
+  const submittedDate = new Date(existing.submittedAt).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
+  return (
+    <div
+      className="fixed inset-0 bg-charcoal/40 z-50 flex items-end sm:items-center justify-center sm:px-6"
+      onClick={onCancel}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 40 }}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-cream rounded-t-3xl sm:rounded-2xl w-full max-w-md p-6 flex flex-col gap-5"
+      >
+        <div>
+          <p className="font-sans text-[10px] tracking-[0.2em] uppercase text-sage">
+            Atenção
+          </p>
+          <h3 className="font-serif text-2xl text-charcoal mt-2">
+            Esta família já tem uma confirmação
+          </h3>
+        </div>
+
+        <div className="bg-white border border-sage-light/30 rounded-xl p-4 flex flex-col gap-2">
+          <p className="font-serif text-lg text-charcoal">{group.label}</p>
+          <p className="font-sans text-xs text-charcoal-light">
+            Confirmado em <strong>{submittedDate}</strong>
+          </p>
+          {existing.attending === 'yes' ? (
+            <p className="font-sans text-sm text-charcoal-light">
+              <strong className="text-charcoal">
+                {prevNames.length} {prevNames.length === 1 ? 'pessoa vai' : 'pessoas vão'}:
+              </strong>{' '}
+              {prevNames.join(', ')}
+            </p>
+          ) : (
+            <p className="font-sans text-sm text-charcoal-light">
+              <strong className="text-charcoal">Marcou que não vai.</strong>
+            </p>
+          )}
+          {existing.editCount !== undefined && existing.editCount > 0 && (
+            <p className="font-sans text-[10px] tracking-[0.15em] uppercase text-charcoal-light/60">
+              Já foi editado {existing.editCount}× antes
+            </p>
+          )}
+        </div>
+
+        <p className="font-sans text-sm text-charcoal-light leading-relaxed">
+          Tem certeza que quer <strong>substituir</strong> essa confirmação pela
+          nova? Se foi engano, é só cancelar e voltar.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 font-sans text-xs tracking-[0.2em] uppercase text-charcoal-light border border-sage-light/40 px-6 py-3 rounded-full hover:bg-charcoal hover:text-cream hover:border-charcoal transition-colors cursor-pointer"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="flex-1 font-sans text-xs tracking-[0.2em] uppercase bg-sage text-cream px-6 py-3 rounded-full hover:bg-sage-dark transition-colors cursor-pointer"
+          >
+            Sim, substituir
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+function StepWrap({ children }: { children: React.ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -16 }}
+      transition={{ duration: 0.35 }}
+      className="mt-12"
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+function SearchStep({
+  query,
+  setQuery,
+  results,
+  onPick,
+}: {
+  query: string
+  setQuery: (q: string) => void
+  results: GuestGroup[]
+  onPick: (g: GuestGroup) => void
+}) {
+  return (
+    <StepWrap>
+      <div className="flex flex-col gap-5">
+        <div className="relative">
+          <Search
+            size={16}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-light/60"
+          />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Digite seu nome ou o da família..."
+            className="w-full bg-white border border-sage-light/30 rounded-xl pl-11 pr-4 py-4 font-sans text-sm text-charcoal placeholder-charcoal/30 focus:outline-none focus:border-sage transition-colors"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-charcoal-light/50 hover:text-charcoal cursor-pointer"
+              aria-label="Limpar busca"
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+
+        {query.length >= 2 && results.length === 0 && (
+          <p className="text-center font-sans text-sm text-charcoal-light leading-relaxed py-6">
+            Hmm, não achamos esse nome.<br />
+            Confira a grafia ou nos chame no WhatsApp.
+          </p>
+        )}
+
+        {results.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {results.map((g) => (
+              <button
+                key={g.id}
+                type="button"
+                onClick={() => onPick(g)}
+                className="w-full text-left bg-white border border-sage-light/30 rounded-xl px-5 py-4 hover:border-sage hover:bg-sage-light/10 transition-all duration-200 cursor-pointer group"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-serif text-lg text-charcoal">{g.label}</p>
+                    <p className="font-sans text-xs text-charcoal-light mt-0.5">
+                      {g.guests.map((x) => x.name).join(' · ')}
+                    </p>
+                  </div>
+                  <Users
+                    size={18}
+                    className="text-sage-light shrink-0 group-hover:text-sage transition-colors"
+                  />
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </StepWrap>
+  )
+}
+
+function GroupStep({
+  group,
+  attending,
+  setAttending,
+  selectedIds,
+  toggleGuest,
+  plusOneName,
+  setPlusOneName,
+  onBack,
+  onContinue,
+}: {
+  group: GuestGroup
+  attending: 'yes' | 'no' | ''
+  setAttending: (a: 'yes' | 'no') => void
+  selectedIds: string[]
+  toggleGuest: (id: string) => void
+  plusOneName: string
+  setPlusOneName: (n: string) => void
+  onBack: () => void
+  onContinue: () => void
+}) {
+  const placeholder = group.guests.find((g) => g.isPlusOnePlaceholder)
+  const placeholderSelected =
+    placeholder && selectedIds.includes(placeholder.id)
+  const placeholderInvalid = placeholderSelected && !plusOneName.trim()
+
+  const realGuestsSelected = selectedIds.filter(
+    (id) => !group.guests.find((g) => g.id === id)?.isPlusOnePlaceholder
+  ).length
+
+  const canContinue =
+    attending === 'no' ||
+    (attending === 'yes' &&
+      realGuestsSelected > 0 &&
+      !placeholderInvalid)
+
+  return (
+    <StepWrap>
+      <div className="flex flex-col gap-5">
+        <button
+          type="button"
+          onClick={onBack}
+          className="self-start flex items-center gap-1.5 font-sans text-xs text-charcoal-light hover:text-charcoal transition-colors cursor-pointer"
+        >
+          <ArrowLeft size={14} /> Voltar
+        </button>
+
+        <div className="bg-white border border-sage-light/30 rounded-xl px-5 py-4">
+          <p className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-light mb-1">
+            Grupo encontrado
+          </p>
+          <p className="font-serif text-2xl text-charcoal">{group.label}</p>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-light">
+            Vão comparecer? *
+          </label>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setAttending('yes')}
+              className={`flex-1 font-sans text-xs py-3 rounded-xl border transition-all duration-200 cursor-pointer ${
+                attending === 'yes'
+                  ? 'bg-sage text-cream border-sage'
+                  : 'bg-white text-charcoal-light border-sage-light/30 hover:border-sage'
+              }`}
+            >
+              Sim, com certeza! 🥂
+            </button>
+            <button
+              type="button"
+              onClick={() => setAttending('no')}
+              className={`flex-1 font-sans text-xs py-3 rounded-xl border transition-all duration-200 cursor-pointer ${
+                attending === 'no'
+                  ? 'bg-sage text-cream border-sage'
+                  : 'bg-white text-charcoal-light border-sage-light/30 hover:border-sage'
+              }`}
+            >
+              Não poderemos ir
+            </button>
+          </div>
+        </div>
+
+        {attending === 'yes' && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="flex flex-col gap-3"
+          >
+            <label className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-light">
+              Quem vai? Marque os presentes
+            </label>
+            <div className="flex flex-col gap-2">
+              {group.guests.map((g) => {
+                const checked = selectedIds.includes(g.id)
+                return (
+                  <label
+                    key={g.id}
+                    className={`flex items-center gap-3 bg-white border rounded-xl px-4 py-3 cursor-pointer transition-all duration-200 ${
+                      checked
+                        ? 'border-sage bg-sage-light/10'
+                        : 'border-sage-light/30 hover:border-sage-light'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleGuest(g.id)}
+                      className="w-4 h-4 accent-sage cursor-pointer"
+                    />
+                    <span className="font-sans text-sm text-charcoal">
+                      {g.name}
+                      {g.isPlusOnePlaceholder && (
+                        <span className="ml-2 font-sans text-[10px] tracking-[0.15em] uppercase text-sage">
+                          (acompanhante)
+                        </span>
+                      )}
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
+
+            {placeholderSelected && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="flex flex-col gap-1.5"
+              >
+                <label className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-light">
+                  Nome do acompanhante *
+                </label>
+                <input
+                  type="text"
+                  value={plusOneName}
+                  onChange={(e) => setPlusOneName(e.target.value)}
+                  placeholder="Nome completo"
+                  className="w-full bg-white border border-sage-light/30 rounded-xl px-4 py-3 font-sans text-sm text-charcoal placeholder-charcoal/30 focus:outline-none focus:border-sage transition-colors"
+                />
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+
+        <button
+          type="button"
+          onClick={onContinue}
+          disabled={!canContinue}
+          className="mt-2 w-full flex items-center justify-center gap-2 bg-sage text-cream font-sans text-xs tracking-[0.2em] uppercase py-4 rounded-full hover:bg-sage-dark transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+        >
+          {attending === 'no' ? 'Enviar resposta' : 'Continuar'}
+        </button>
+      </div>
+    </StepWrap>
+  )
+}
+
+function DetailsStep({
+  details,
+  setDetails,
+  onBack,
+  onSubmit,
+}: {
+  details: Details
+  setDetails: (d: Details) => void
+  onBack: () => void
+  onSubmit: () => void
+}) {
+  function update<K extends keyof Details>(key: K, value: Details[K]) {
+    setDetails({ ...details, [key]: value })
+  }
+
+  return (
+    <StepWrap>
+      <div className="flex flex-col gap-5">
+        <button
+          type="button"
+          onClick={onBack}
+          className="self-start flex items-center gap-1.5 font-sans text-xs text-charcoal-light hover:text-charcoal transition-colors cursor-pointer"
+        >
+          <ArrowLeft size={14} /> Voltar
+        </button>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-light">
+            WhatsApp *
+          </label>
+          <input
+            type="tel"
+            inputMode="numeric"
+            value={details.phone}
+            onChange={(e) => update('phone', formatPhone(e.target.value))}
+            placeholder="(11) 9 0000-0000"
+            required
+            maxLength={16}
+            className="w-full bg-white border border-sage-light/30 rounded-xl px-4 py-3 font-sans text-sm text-charcoal placeholder-charcoal/30 focus:outline-none focus:border-sage transition-colors"
+          />
+          {details.phone && !isValidPhone(details.phone) && (
+            <p className="font-sans text-xs text-red-500">
+              Digite um número completo (DDD + 9 dígitos do celular).
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-light">
+            Mensagem para os noivos (opcional)
+          </label>
+          <textarea
+            value={details.message}
+            onChange={(e) => update('message', e.target.value)}
+            rows={3}
+            placeholder="Deixe um recado especial..."
+            className="w-full bg-white border border-sage-light/30 rounded-xl px-4 py-3 font-sans text-sm text-charcoal placeholder-charcoal/30 focus:outline-none focus:border-sage transition-colors resize-none"
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={!isValidPhone(details.phone)}
+          className="mt-2 w-full flex items-center justify-center gap-2 bg-sage text-cream font-sans text-xs tracking-[0.2em] uppercase py-4 rounded-full hover:bg-sage-dark transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+        >
+          <Send size={14} />
+          Confirmar
+        </button>
+      </div>
+    </StepWrap>
+  )
+}
+
+function SuccessStep({
+  group,
+  attending,
+  count,
+}: {
+  group: GuestGroup
+  attending: 'yes' | 'no'
+  count: number
+}) {
+  useEffect(() => {
+    if (attending === 'yes') celebrate()
+  }, [attending])
+
+  return (
+    <motion.div
+      key="success"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+      className="mt-12 max-w-md mx-auto flex flex-col items-center text-center gap-6"
+    >
+      <CheckCircle size={48} className="text-sage" />
+      <h3 className="font-serif text-3xl font-light text-charcoal">
+        {attending === 'yes' ? 'Até lá! 🌿' : 'Vamos sentir sua falta!'}
+      </h3>
+      <p className="font-sans text-sm text-charcoal-light leading-relaxed">
+        {attending === 'yes' ? (
+          <>
+            Confirmação recebida pra <strong>{group.label}</strong>.<br />
+            {count === 1 ? '1 pessoa' : `${count} pessoas`} vão celebrar com a
+            gente. Mal podemos esperar!
+          </>
+        ) : (
+          <>
+            Obrigado por avisar, <strong>{group.label}</strong>. Estaremos
+            pensando em vocês no dia.
+          </>
+        )}
+      </p>
+    </motion.div>
   )
 }

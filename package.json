@@ -10,9 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@types/canvas-confetti": "^1.9.0",
     "@types/react-scroll": "^1.8.10",
+    "canvas-confetti": "^1.9.4",
     "framer-motion": "^12.34.3",
     "lucide-react": "^0.575.0",
+    "qrcode.react": "^4.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-scroll": "^1.9.3"

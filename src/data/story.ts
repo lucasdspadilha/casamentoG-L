@@ -40,10 +40,11 @@ export const storyEvents: StoryEvent[] = [
     img: `${import.meta.env.BASE_URL}images/story/primeira_casa.jpeg`,
   },
   {
-    year: '07 Set · 2025',
+    year: '07 Set · 2026',
     title: 'Nosso dia',
     description:
       'Em 07 de setembro, prometemos um ao outro diante de todos que amamos. O começo do capítulo mais bonito que já escrevemos juntos.',
     emoji: '🌿',
+    img: `${import.meta.env.BASE_URL}images/story/bar_botanico.jpg`
   },
 ]

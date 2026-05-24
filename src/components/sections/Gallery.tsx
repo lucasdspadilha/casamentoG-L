@@ -1,58 +1,67 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { SectionTitle } from '../ui/SectionTitle'
+import { useBodyScrollLock } from '../../lib/useBodyScrollLock'
 
-// Placeholder images using gradient backgrounds — replace with real photos
 const photos = [
   {
     id: 1,
-    src: '',
+    src: `${import.meta.env.BASE_URL}images/moments/1.jpeg`,
     alt: 'Giulia e Lucas',
     bg: 'from-sage-light/30 to-sage/20',
-    label: 'Ensaio',
+    label: 'Tarde de domingo',
+    description: 'Almoço em família. Vibe.',
     span: 'md:col-span-2 md:row-span-2',
   },
   {
     id: 2,
-    src: '',
+    src: `${import.meta.env.BASE_URL}images/moments/2.jpeg`,
     alt: 'Giulia e Lucas',
     bg: 'from-gold-light/30 to-gold/20',
-    label: 'Primeira viagem',
+    label: 'Festa fantasia',
+    description: 'A princesa e Luffy no mesmo elevador. Combinamos sem combinar.',
     span: '',
+    position: 'object-[center_25%]',
   },
   {
     id: 3,
-    src: '',
+    src: `${import.meta.env.BASE_URL}images/moments/3.jpeg`,
     alt: 'Giulia e Lucas',
     bg: 'from-cream-dark to-sage-light/20',
-    label: 'Nossa casa',
+    label: 'Lollapalooza',
+    description: 'Mural colorido, música alta e a gente entre os palcos.',
     span: '',
   },
   {
     id: 4,
-    src: '',
+    src: `${import.meta.env.BASE_URL}images/moments/4.jpeg`,
     alt: 'Giulia e Lucas',
     bg: 'from-sage/20 to-sage-dark/10',
-    label: 'O pedido',
+    label: 'Miami à deriva',
+    description: 'Retrovisor, calor de Miami. Nossa Roadtrip.',
     span: 'md:col-span-2',
+    zoomClass: 'scale-150 group-hover:scale-[1.56]',
+    position: 'object-[center_55%]',
   },
   {
     id: 5,
-    src: '',
+    src: `${import.meta.env.BASE_URL}images/moments/5.jpeg`,
     alt: 'Giulia e Lucas',
     bg: 'from-gold/20 to-cream-dark',
-    label: 'Juntos',
+    label: 'Comemorando',
+    description: 'Nós.',
     span: '',
+    position: 'object-[center_25%]',
   },
-  {
-    id: 6,
-    src: '',
-    alt: 'Giulia e Lucas',
-    bg: 'from-sage-light/20 to-cream-dark',
-    label: 'Momentos',
-    span: '',
-  },
+  // {
+  //   id: 6,
+  //   src: '',
+  //   alt: 'Giulia e Lucas',
+  //   bg: 'from-sage-light/20 to-cream-dark',
+  //   label: 'Momentos',
+  //   span: '',
+  // },
 ]
 
 function PlaceholderPhoto({ bg, label }: { bg: string; label: string }) {
@@ -72,6 +81,7 @@ function PlaceholderPhoto({ bg, label }: { bg: string; label: string }) {
 
 export function Gallery() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  useBodyScrollLock(lightboxIndex !== null)
 
   const openLightbox = (index: number) => setLightboxIndex(index)
   const closeLightbox = () => setLightboxIndex(null)
@@ -79,6 +89,17 @@ export function Gallery() {
     setLightboxIndex((i) => (i === null ? null : (i - 1 + photos.length) % photos.length))
   const next = () =>
     setLightboxIndex((i) => (i === null ? null : (i + 1) % photos.length))
+
+  useEffect(() => {
+    if (lightboxIndex === null) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeLightbox()
+      else if (e.key === 'ArrowLeft') prev()
+      else if (e.key === 'ArrowRight') next()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [lightboxIndex])
 
   return (
     <section id="galeria" className="py-24 md:py-32 px-6 bg-cream-dark">
@@ -94,7 +115,7 @@ export function Gallery() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="mt-12 grid grid-cols-2 md:grid-cols-3 auto-rows-48 gap-3"
+          className="mt-12 grid grid-cols-2 md:grid-cols-3 auto-rows-[250px] gap-3"
         >
           {photos.map((photo, index) => (
             <motion.div
@@ -106,13 +127,17 @@ export function Gallery() {
               whileHover={{ scale: 1.01 }}
               onClick={() => openLightbox(index)}
               className={`relative overflow-hidden rounded-xl cursor-pointer group ${photo.span}`}
-              style={{ minHeight: '180px' }}
+              style={{ minHeight: '140px' }}
             >
               {photo.src ? (
                 <img
                   src={photo.src}
                   alt={photo.alt}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  loading="lazy"
+                  decoding="async"
+                  className={`w-full h-full object-cover transition-transform duration-500 ${
+                    photo.position ?? ''
+                  } ${photo.zoomClass ?? 'group-hover:scale-105'}`}
                 />
               ) : (
                 <PlaceholderPhoto bg={photo.bg} label={photo.label} />
@@ -165,20 +190,23 @@ export function Gallery() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
-              className="max-w-2xl w-full aspect-[4/3] rounded-xl overflow-hidden"
+              className="flex items-center justify-center"
               onClick={(e) => e.stopPropagation()}
             >
               {photos[lightboxIndex].src ? (
                 <img
                   src={photos[lightboxIndex].src}
                   alt={photos[lightboxIndex].alt}
-                  className="w-full h-full object-cover"
+                  decoding="async"
+                  className="max-w-[90vw] max-h-[85vh] w-auto h-auto object-contain rounded-xl"
                 />
               ) : (
-                <PlaceholderPhoto
-                  bg={photos[lightboxIndex].bg}
-                  label={photos[lightboxIndex].label}
-                />
+                <div className="max-w-2xl w-full aspect-[4/3] rounded-xl overflow-hidden">
+                  <PlaceholderPhoto
+                    bg={photos[lightboxIndex].bg}
+                    label={photos[lightboxIndex].label}
+                  />
+                </div>
               )}
             </motion.div>
 
@@ -189,9 +217,19 @@ export function Gallery() {
               <ChevronRight size={32} />
             </button>
 
-            <p className="absolute bottom-6 font-sans text-xs tracking-[0.15em] uppercase text-cream/40">
-              {lightboxIndex + 1} / {photos.length} — {photos[lightboxIndex].label}
-            </p>
+            <div className="absolute bottom-6 left-0 right-0 text-center px-6 pointer-events-none">
+              <p className="font-serif text-lg text-cream/90">
+                {photos[lightboxIndex].label}
+              </p>
+              {photos[lightboxIndex].description && (
+                <p className="font-sans text-xs text-cream/60 mt-1 max-w-md mx-auto">
+                  {photos[lightboxIndex].description}
+                </p>
+              )}
+              <p className="font-sans text-[10px] tracking-[0.2em] uppercase text-cream/30 mt-2">
+                {lightboxIndex + 1} / {photos.length}
+              </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -7,7 +7,7 @@ export const faqs: FaqItem[] = [
   {
     question: 'Qual é o dress code?',
     answer:
-      'Traje esporte fino / social. Fique à vontade para se expressar com elegância!',
+      'Traje esporte fino. Fique à vontade para se expressar com elegância!',
   },
   {
     question: 'Haverá estacionamento?',
@@ -32,6 +32,6 @@ export const faqs: FaqItem[] = [
   {
     question: 'Até quando preciso confirmar presença?',
     answer:
-      'Pedimos que confirme até o dia 10 de agosto de 2025 pelo formulário aqui do site ou pelo WhatsApp da Giulia.',
+      'Pedimos que confirme até o dia 10 de agosto de 2026 pelo formulário aqui do site.',
   },
 ]

@@ -9,7 +9,7 @@ export function Footer() {
         </div>
 
         <p className="font-sans text-xs tracking-[0.2em] uppercase text-cream/50">
-          07 de Setembro de 2025
+          07 de Setembro de 2026
         </p>
 
         <div className="h-px w-24 bg-sage-light/30" />

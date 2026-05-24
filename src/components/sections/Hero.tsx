@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-scroll'
 import { ChevronDown } from 'lucide-react'
 
-const WEDDING_DATE = new Date('2025-09-07T10:30:00')
+const WEDDING_DATE = new Date('2026-09-07T10:30:00')
 
 interface TimeLeft {
   days: number
