@@ -64,7 +64,7 @@ export function Ceremony() {
             icon={<CalendarDays size={20} />}
             label="Data"
             value="07 de Setembro"
-            sub="Domingo"
+            sub="Segunda"
           />
           <InfoCard
             icon={<Clock size={20} />}
@@ -127,9 +127,9 @@ export function Ceremony() {
           <div className="flex flex-col gap-0 border-l border-sage-light/20 pl-6">
             {[
               { time: '10h30', event: 'Recepção dos convidados' },
-              { time: '11h00', event: 'Cerimônia civil' },
-              { time: '12h00', event: 'Coquetel & fotos' },
-              { time: '13h30', event: 'Almoço' },
+              { time: '11h00', event: 'Cerimônia' },
+              { time: '11h30', event: 'Fotos' },
+              { time: '11h45', event: 'Brunch & Party' },
               { time: '15h00', event: 'Bolo & brinde' },
               { time: '16h30', event: 'Fim da Festa' },
             ].map((item, i) => (

@@ -88,7 +88,7 @@ export function Hero() {
   return (
     <section
       id="hero"
-      className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-cream px-6"
+      className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-cream px-6 pt-24 pb-16"
     >
       <BotanicalLeft />
       <BotanicalRight />
@@ -104,7 +104,7 @@ export function Hero() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="font-sans text-xs tracking-[0.3em] uppercase text-sage mb-8"
         >
-          convidam para celebrar o casamento de
+          Você está convidado para celebrar
         </motion.p>
 
         {/* Names */}
