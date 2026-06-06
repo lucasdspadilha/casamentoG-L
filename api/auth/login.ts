@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import bcrypt from 'bcryptjs'
-import { supabase } from '../_lib/supabase'
-import { createSession } from '../_lib/session'
+import { supabase } from '../_lib/supabase.js'
+import { createSession } from '../_lib/session.js'
 
 // Hash dummy pra equalizar timing quando email não existe (anti enumeração).
 const DUMMY_HASH =

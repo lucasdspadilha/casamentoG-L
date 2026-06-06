@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { supabase } from '../_lib/supabase'
+import { supabase } from '../_lib/supabase.js'
 
 // Endpoint público — retorna apenas o resumo necessário pro modal de overwrite.
 // NÃO retorna phone, message, previousVersions (dados pessoais).

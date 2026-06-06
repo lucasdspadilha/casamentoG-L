@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { supabase } from './supabase'
+import { supabase } from './supabase.js'
 
 const COOKIE_NAME = 'admin_session'
 const SESSION_DURATION_DAYS = 30

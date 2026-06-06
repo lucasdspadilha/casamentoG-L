@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { supabase } from '../_lib/supabase'
-import { requireSessionUser } from '../_lib/session'
+import { supabase } from '../_lib/supabase.js'
+import { requireSessionUser } from '../_lib/session.js'
 
 interface IncomingRsvp {
   groupId: string
