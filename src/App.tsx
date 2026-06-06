@@ -10,12 +10,18 @@ import { Rsvp } from './components/sections/Rsvp'
 import { Admin } from './components/admin/Admin'
 import { CartFloating } from './components/wishlist/CartFloating'
 import { CartProvider } from './lib/cart'
-import { useHashRoute } from './lib/useHashRoute'
+import { useRoute } from './lib/useHashRoute'
 
 function App() {
-  const hash = useHashRoute()
+  const { pathname, hash } = useRoute()
 
-  if (hash === '#/admin' || hash === '#admin') {
+  const isAdmin =
+    pathname === '/admin' ||
+    pathname === '/admin/' ||
+    hash === '#/admin' ||
+    hash === '#admin'
+
+  if (isAdmin) {
     return <Admin />
   }
 

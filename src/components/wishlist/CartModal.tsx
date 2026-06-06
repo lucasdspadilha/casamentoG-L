@@ -15,7 +15,7 @@ import { useEscapeKey } from '../../lib/useEscapeKey'
 import { wishes } from '../../data/wishes'
 import { parseAmount, formatBRL } from '../../lib/money'
 import { generatePixPayload, PIX_CONFIG } from '../../lib/pix'
-import { saveGift, type GiftRecord } from '../../lib/gifts'
+import { saveGift } from '../../lib/gifts'
 import { celebrate } from '../../lib/confetti'
 
 type Step = 'cart' | 'name' | 'success'
@@ -85,9 +85,8 @@ export function CartModal({ onClose }: Props) {
     }
   }
 
-  function confirmGift() {
-    const record: GiftRecord = {
-      id: crypto.randomUUID(),
+  async function confirmGift() {
+    const record = {
       giverName: giverName.trim() || 'Anônimo',
       items: enriched.map((e) => ({
         wishId: e.wish.id,
@@ -97,9 +96,16 @@ export function CartModal({ onClose }: Props) {
       total,
       submittedAt: new Date().toISOString(),
     }
-    saveGift(record)
-    clear()
-    setStep('success')
+    try {
+      await saveGift(record)
+      clear()
+      setStep('success')
+    } catch (err) {
+      alert(
+        'Erro ao registrar presente: ' +
+          (err instanceof Error ? err.message : 'tente novamente')
+      )
+    }
   }
 
   return (

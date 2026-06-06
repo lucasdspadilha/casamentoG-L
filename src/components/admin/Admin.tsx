@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Lock,
@@ -30,28 +30,53 @@ import {
   type GiftRecord,
 } from '../../lib/gifts'
 import { formatBRL } from '../../lib/money'
-import { login, isLoggedIn, logout } from '../../lib/auth'
+import { login, logout, getCurrentUser, type AuthUser } from '../../lib/auth'
 
 type MainTab = 'rsvp' | 'gifts'
 type FilterTab = 'all' | 'confirmed' | 'declined' | 'pending'
 
 export function Admin() {
-  const [authed, setAuthed] = useState(isLoggedIn())
-  if (!authed) return <LoginScreen onSuccess={() => setAuthed(true)} />
-  return <Dashboard onLogout={() => setAuthed(false)} />
+  const [authState, setAuthState] = useState<
+    'loading' | 'unauthed' | AuthUser
+  >('loading')
+
+  useEffect(() => {
+    getCurrentUser()
+      .then((user) => setAuthState(user ?? 'unauthed'))
+      .catch(() => setAuthState('unauthed'))
+  }, [])
+
+  if (authState === 'loading') {
+    return (
+      <section className="min-h-screen bg-cream flex items-center justify-center px-6">
+        <p className="font-sans text-sm text-charcoal-light">Carregando...</p>
+      </section>
+    )
+  }
+  if (authState === 'unauthed') {
+    return <LoginScreen onSuccess={(user) => setAuthState(user)} />
+  }
+  return <Dashboard onLogout={() => setAuthState('unauthed')} />
 }
 
-function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
+function LoginScreen({ onSuccess }: { onSuccess: (u: AuthUser) => void }) {
+  const [email, setEmail] = useState('')
   const [pwd, setPwd] = useState('')
-  const [error, setError] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (login(pwd)) {
-      onSuccess()
-    } else {
-      setError(true)
+    setError('')
+    setLoading(true)
+    try {
+      const user = await login(email, pwd)
+      onSuccess(user)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha no login.')
       setPwd('')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -70,31 +95,48 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
             Acesso restrito
           </p>
         </div>
-        <div className="w-full flex flex-col gap-2">
+        <div className="w-full flex flex-col gap-3">
           <input
-            type="password"
-            value={pwd}
+            type="email"
+            value={email}
             onChange={(e) => {
-              setPwd(e.target.value)
-              setError(false)
+              setEmail(e.target.value)
+              setError('')
             }}
-            placeholder="Senha"
+            placeholder="E-mail"
             autoFocus
+            required
+            disabled={loading}
             className={`w-full bg-cream border rounded-xl px-4 py-3 font-sans text-sm text-charcoal placeholder-charcoal/30 focus:outline-none transition-colors ${
               error
                 ? 'border-red-400 focus:border-red-500'
                 : 'border-sage-light/30 focus:border-sage'
             }`}
           />
-          {error && (
-            <p className="font-sans text-xs text-red-500">Senha incorreta.</p>
-          )}
+          <input
+            type="password"
+            value={pwd}
+            onChange={(e) => {
+              setPwd(e.target.value)
+              setError('')
+            }}
+            placeholder="Senha"
+            required
+            disabled={loading}
+            className={`w-full bg-cream border rounded-xl px-4 py-3 font-sans text-sm text-charcoal placeholder-charcoal/30 focus:outline-none transition-colors ${
+              error
+                ? 'border-red-400 focus:border-red-500'
+                : 'border-sage-light/30 focus:border-sage'
+            }`}
+          />
+          {error && <p className="font-sans text-xs text-red-500">{error}</p>}
         </div>
         <button
           type="submit"
-          className="w-full bg-sage text-cream font-sans text-xs tracking-[0.2em] uppercase py-3 rounded-full hover:bg-sage-dark transition-colors cursor-pointer"
+          disabled={loading || !email || !pwd}
+          className="w-full bg-sage text-cream font-sans text-xs tracking-[0.2em] uppercase py-3 rounded-full hover:bg-sage-dark transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Entrar
+          {loading ? 'Entrando...' : 'Entrar'}
         </button>
       </motion.form>
     </section>
@@ -104,8 +146,8 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
 function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [mainTab, setMainTab] = useState<MainTab>('rsvp')
 
-  function doLogout() {
-    logout()
+  async function doLogout() {
+    await logout()
     onLogout()
   }
 
@@ -151,8 +193,25 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 }
 
 function RsvpPanel() {
-  const [rsvps, setRsvps] = useState<RsvpEntry[]>(() => getAllRsvps())
+  const [rsvps, setRsvps] = useState<RsvpEntry[]>([])
+  const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<FilterTab>('all')
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await getAllRsvps()
+      setRsvps(data)
+    } catch {
+      setRsvps([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
 
   const stats = useMemo(() => {
     const confirmed = rsvps.filter((r) => r.attending === 'yes')
@@ -205,11 +264,27 @@ function RsvpPanel() {
     downloadFile(data, `rsvp-${new Date().toISOString().slice(0, 10)}.json`)
   }
 
-  function clearAll() {
-    if (confirm('Apagar TODAS as confirmações? Essa ação não pode ser desfeita.')) {
-      clearAllRsvps()
-      setRsvps([])
+  async function clearAll() {
+    if (
+      !confirm('Apagar TODAS as confirmações? Essa ação não pode ser desfeita.')
+    )
+      return
+    try {
+      await clearAllRsvps()
+      await load()
+    } catch (err) {
+      alert(
+        'Erro ao limpar: ' + (err instanceof Error ? err.message : 'unknown')
+      )
     }
+  }
+
+  if (loading) {
+    return (
+      <p className="font-sans text-sm text-charcoal-light text-center py-12">
+        Carregando confirmações...
+      </p>
+    )
   }
 
   return (
@@ -226,12 +301,10 @@ function RsvpPanel() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard
           label="Pessoas confirmadas"
-          value={
-            stats.confirmed.reduce(
-              (s, r) => s + r.attendingGuestIds.length,
-              0
-            )
-          }
+          value={stats.confirmed.reduce(
+            (s, r) => s + r.attendingGuestIds.length,
+            0
+          )}
           highlight
         />
         <StatCard
@@ -279,8 +352,25 @@ function RsvpPanel() {
 }
 
 function GiftsPanel() {
-  const [gifts, setGifts] = useState<GiftRecord[]>(() => getAllGifts())
+  const [gifts, setGifts] = useState<GiftRecord[]>([])
+  const [loading, setLoading] = useState(true)
   const [showManual, setShowManual] = useState(false)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await getAllGifts()
+      setGifts(data)
+    } catch {
+      setGifts([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
 
   const stats = useMemo(() => {
     const total = gifts.reduce((s, g) => s + g.total, 0)
@@ -290,20 +380,37 @@ function GiftsPanel() {
 
   function exportJson() {
     const data = JSON.stringify(gifts, null, 2)
-    downloadFile(data, `presentes-${new Date().toISOString().slice(0, 10)}.json`)
+    downloadFile(
+      data,
+      `presentes-${new Date().toISOString().slice(0, 10)}.json`
+    )
   }
 
-  function clearAll() {
-    if (confirm('Apagar TODOS os registros de presentes? Essa ação não pode ser desfeita.')) {
-      clearAllGifts()
-      setGifts([])
+  async function clearAll() {
+    if (
+      !confirm(
+        'Apagar TODOS os registros de presentes? Essa ação não pode ser desfeita.'
+      )
+    )
+      return
+    try {
+      await clearAllGifts()
+      await load()
+    } catch (err) {
+      alert(
+        'Erro ao limpar: ' + (err instanceof Error ? err.message : 'unknown')
+      )
     }
   }
 
   return (
     <div>
       <div className="flex justify-end gap-2 mb-6 flex-wrap">
-        <ActionBtn icon={<Plus size={14} />} onClick={() => setShowManual(true)} primary>
+        <ActionBtn
+          icon={<Plus size={14} />}
+          onClick={() => setShowManual(true)}
+          primary
+        >
           Adicionar presente
         </ActionBtn>
         <ActionBtn icon={<Download size={14} />} onClick={exportJson}>
@@ -318,9 +425,9 @@ function GiftsPanel() {
         {showManual && (
           <ManualGiftDialog
             onClose={() => setShowManual(false)}
-            onSaved={(record) => {
-              setGifts((prev) => [...prev, record])
+            onSaved={() => {
               setShowManual(false)
+              load()
             }}
           />
         )}
@@ -338,17 +445,18 @@ function GiftsPanel() {
       </div>
 
       <div className="flex flex-col gap-3">
-        {gifts.length === 0 && (
+        {loading && (
+          <p className="font-sans text-sm text-charcoal-light text-center py-12">
+            Carregando presentes...
+          </p>
+        )}
+        {!loading && gifts.length === 0 && (
           <p className="font-sans text-sm text-charcoal-light text-center py-12">
             Nenhum presente registrado ainda.
           </p>
         )}
-        {gifts
-          .slice()
-          .reverse()
-          .map((gift) => (
-            <GiftRow key={gift.id} gift={gift} />
-          ))}
+        {!loading &&
+          gifts.map((gift) => <GiftRow key={gift.id} gift={gift} />)}
       </div>
     </div>
   )
@@ -366,7 +474,9 @@ function GiftRow({ gift }: { gift: GiftRecord }) {
             {new Date(gift.submittedAt).toLocaleString('pt-BR')}
           </p>
         </div>
-        <span className="font-serif text-xl text-sage">{formatBRL(gift.total)}</span>
+        <span className="font-serif text-xl text-sage">
+          {formatBRL(gift.total)}
+        </span>
       </div>
 
       <ul className="flex flex-col gap-1 bg-cream rounded-lg p-3">

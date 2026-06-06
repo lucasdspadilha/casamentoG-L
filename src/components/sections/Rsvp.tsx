@@ -7,7 +7,6 @@ import {
   getRsvpByGroup,
   saveRsvp,
   type RsvpEntry,
-  type PreviousVersion,
 } from '../../lib/rsvp'
 import { celebrate } from '../../lib/confetti'
 import { formatPhone, isValidPhone } from '../../lib/phone'
@@ -33,6 +32,7 @@ export function Rsvp() {
   const [details, setDetails] = useState<Details>(emptyDetails)
   const [pendingEntry, setPendingEntry] = useState<RsvpEntry | null>(null)
   const [existingEntry, setExistingEntry] = useState<RsvpEntry | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
   const results = useMemo(() => searchGroups(query), [query])
   const group = groupId ? findGroupById(groupId) : undefined
@@ -80,38 +80,47 @@ export function Rsvp() {
     }
   }
 
-  function submit(finalAttending: 'yes' | 'no', finalIds: string[]) {
-    if (!group) return
+  async function submit(finalAttending: 'yes' | 'no', finalIds: string[]) {
+    if (!group || submitting) return
+    setSubmitting(true)
     const entry = buildEntry(finalAttending, finalIds)
-    const existing = getRsvpByGroup(group.id)
-    if (existing) {
-      // Já existe RSVP — pede confirmação antes de sobrescrever.
-      setPendingEntry(entry)
-      setExistingEntry(existing)
-      return
+    try {
+      const existing = await getRsvpByGroup(group.id)
+      if (existing) {
+        // Já existe RSVP — pede confirmação antes de sobrescrever.
+        setPendingEntry(entry)
+        setExistingEntry(existing)
+        return
+      }
+      await saveRsvp(entry)
+      setStep('success')
+    } catch (err) {
+      alert(
+        'Erro ao enviar confirmação: ' +
+          (err instanceof Error ? err.message : 'tente novamente')
+      )
+    } finally {
+      setSubmitting(false)
     }
-    saveRsvp(entry)
-    setStep('success')
   }
 
-  function confirmOverwrite() {
-    if (!pendingEntry || !existingEntry) return
-    const previousVersion: PreviousVersion = {
-      attending: existingEntry.attending,
-      attendingGuestIds: existingEntry.attendingGuestIds,
-      plusOneName: existingEntry.plusOneName,
-      phone: existingEntry.phone,
-      message: existingEntry.message,
-      submittedAt: existingEntry.submittedAt,
+  async function confirmOverwrite() {
+    if (!pendingEntry || submitting) return
+    setSubmitting(true)
+    try {
+      // Backend cuida do editCount e previousVersions automaticamente
+      await saveRsvp(pendingEntry)
+      setPendingEntry(null)
+      setExistingEntry(null)
+      setStep('success')
+    } catch (err) {
+      alert(
+        'Erro ao atualizar confirmação: ' +
+          (err instanceof Error ? err.message : 'tente novamente')
+      )
+    } finally {
+      setSubmitting(false)
     }
-    saveRsvp({
-      ...pendingEntry,
-      editCount: (existingEntry.editCount ?? 0) + 1,
-      previousVersions: [...(existingEntry.previousVersions ?? []), previousVersion],
-    })
-    setPendingEntry(null)
-    setExistingEntry(null)
-    setStep('success')
   }
 
   function cancelOverwrite() {
@@ -150,6 +159,7 @@ export function Rsvp() {
               setPlusOneName={setPlusOneName}
               onBack={() => setStep('search')}
               onContinue={goToDetails}
+              submitting={submitting}
             />
           )}
           {step === 'details' && group && (
@@ -159,6 +169,7 @@ export function Rsvp() {
               setDetails={setDetails}
               onBack={() => setStep('group')}
               onSubmit={() => submit('yes', selectedIds)}
+              submitting={submitting}
             />
           )}
           {step === 'success' && group && (
@@ -179,6 +190,7 @@ export function Rsvp() {
             existing={existingEntry}
             onCancel={cancelOverwrite}
             onConfirm={confirmOverwrite}
+            submitting={submitting}
           />
         )}
       </AnimatePresence>
@@ -191,11 +203,13 @@ function OverwriteDialog({
   existing,
   onCancel,
   onConfirm,
+  submitting,
 }: {
   group: GuestGroup
   existing: RsvpEntry
   onCancel: () => void
   onConfirm: () => void
+  submitting: boolean
 }) {
   useEscapeKey(onCancel)
 
@@ -277,9 +291,10 @@ function OverwriteDialog({
           <button
             type="button"
             onClick={onConfirm}
-            className="flex-1 font-sans text-xs tracking-[0.2em] uppercase bg-sage text-cream px-6 py-3 rounded-full hover:bg-sage-dark transition-colors cursor-pointer"
+            disabled={submitting}
+            className="flex-1 font-sans text-xs tracking-[0.2em] uppercase bg-sage text-cream px-6 py-3 rounded-full hover:bg-sage-dark transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Sim, substituir
+            {submitting ? 'Salvando...' : 'Sim, substituir'}
           </button>
         </div>
       </motion.div>
@@ -386,6 +401,7 @@ function GroupStep({
   setPlusOneName,
   onBack,
   onContinue,
+  submitting,
 }: {
   group: GuestGroup
   attending: 'yes' | 'no' | ''
@@ -396,6 +412,7 @@ function GroupStep({
   setPlusOneName: (n: string) => void
   onBack: () => void
   onContinue: () => void
+  submitting: boolean
 }) {
   const placeholder = group.guests.find((g) => g.isPlusOnePlaceholder)
   const placeholderSelected =
@@ -524,10 +541,14 @@ function GroupStep({
         <button
           type="button"
           onClick={onContinue}
-          disabled={!canContinue}
+          disabled={!canContinue || submitting}
           className="mt-2 w-full flex items-center justify-center gap-2 bg-sage text-cream font-sans text-xs tracking-[0.2em] uppercase py-4 rounded-full hover:bg-sage-dark transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
         >
-          {attending === 'no' ? 'Enviar resposta' : 'Continuar'}
+          {submitting
+            ? 'Enviando...'
+            : attending === 'no'
+              ? 'Enviar resposta'
+              : 'Continuar'}
         </button>
       </div>
     </StepWrap>
@@ -539,11 +560,13 @@ function DetailsStep({
   setDetails,
   onBack,
   onSubmit,
+  submitting,
 }: {
   details: Details
   setDetails: (d: Details) => void
   onBack: () => void
   onSubmit: () => void
+  submitting: boolean
 }) {
   function update<K extends keyof Details>(key: K, value: Details[K]) {
     setDetails({ ...details, [key]: value })
@@ -597,11 +620,11 @@ function DetailsStep({
         <button
           type="button"
           onClick={onSubmit}
-          disabled={!isValidPhone(details.phone)}
+          disabled={!isValidPhone(details.phone) || submitting}
           className="mt-2 w-full flex items-center justify-center gap-2 bg-sage text-cream font-sans text-xs tracking-[0.2em] uppercase py-4 rounded-full hover:bg-sage-dark transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
         >
           <Send size={14} />
-          Confirmar
+          {submitting ? 'Enviando...' : 'Confirmar'}
         </button>
       </div>
     </StepWrap>

@@ -81,7 +81,7 @@ export function ManualGiftDialog({ onClose, onSaved }: Props) {
     setLines((prev) => prev.filter((l) => l.id !== id))
   }
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault()
     const valid = lines
       .filter((l) => l.title.trim() && Number(l.amount) > 0)
@@ -96,15 +96,19 @@ export function ManualGiftDialog({ onClose, onSaved }: Props) {
       return
     }
 
-    const record: GiftRecord = {
-      id: crypto.randomUUID(),
-      giverName: giverName.trim() || 'Anônimo',
-      items: valid,
-      total: valid.reduce((s, i) => s + i.amount, 0),
-      submittedAt: new Date(`${receivedAt}T12:00:00`).toISOString(),
+    try {
+      const saved = await saveGift({
+        giverName: giverName.trim() || 'Anônimo',
+        items: valid,
+        total: valid.reduce((s, i) => s + i.amount, 0),
+        submittedAt: new Date(`${receivedAt}T12:00:00`).toISOString(),
+      })
+      onSaved(saved)
+    } catch (err) {
+      setError(
+        'Erro ao salvar: ' + (err instanceof Error ? err.message : 'tente de novo')
+      )
     }
-    saveGift(record)
-    onSaved(record)
   }
 
   return (

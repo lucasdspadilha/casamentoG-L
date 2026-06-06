@@ -19,27 +19,53 @@ export interface RsvpEntry {
   previousVersions?: PreviousVersion[]
 }
 
-const STORAGE_KEY = 'rsvp-entries-v1'
-
-export function getAllRsvps(): RsvpEntry[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as RsvpEntry[]) : []
-  } catch {
-    return []
+async function jsonOrThrow<T>(res: Response): Promise<T> {
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body?.error ?? `Request failed (${res.status})`)
   }
+  return res.json() as Promise<T>
 }
 
-export function getRsvpByGroup(groupId: string): RsvpEntry | undefined {
-  return getAllRsvps().find((e) => e.groupId === groupId)
+export async function getAllRsvps(): Promise<RsvpEntry[]> {
+  const res = await fetch('/api/rsvps', { credentials: 'include' })
+  return jsonOrThrow<RsvpEntry[]>(res)
 }
 
-export function saveRsvp(entry: RsvpEntry) {
-  const all = getAllRsvps().filter((e) => e.groupId !== entry.groupId)
-  all.push(entry)
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(all))
+export async function getRsvpByGroup(
+  groupId: string
+): Promise<RsvpEntry | undefined> {
+  const res = await fetch(`/api/rsvps/${encodeURIComponent(groupId)}`, {
+    credentials: 'include',
+  })
+  if (res.status === 404) return undefined
+  return jsonOrThrow<RsvpEntry>(res)
 }
 
-export function clearAllRsvps() {
-  localStorage.removeItem(STORAGE_KEY)
+export async function saveRsvp(entry: RsvpEntry): Promise<RsvpEntry> {
+  const res = await fetch('/api/rsvps', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      groupId: entry.groupId,
+      attending: entry.attending,
+      attendingGuestIds: entry.attendingGuestIds,
+      plusOneName: entry.plusOneName,
+      phone: entry.phone,
+      message: entry.message,
+    }),
+  })
+  return jsonOrThrow<RsvpEntry>(res)
+}
+
+export async function clearAllRsvps(): Promise<void> {
+  const res = await fetch('/api/rsvps', {
+    method: 'DELETE',
+    credentials: 'include',
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body?.error ?? `Request failed (${res.status})`)
+  }
 }
