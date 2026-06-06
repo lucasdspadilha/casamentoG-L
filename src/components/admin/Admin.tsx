@@ -293,7 +293,13 @@ function RsvpPanel() {
         <ActionBtn icon={<Download size={14} />} onClick={exportJson}>
           Exportar
         </ActionBtn>
-        <ActionBtn icon={<Trash2 size={14} />} onClick={clearAll} danger>
+        <ActionBtn
+          icon={<Trash2 size={14} />}
+          onClick={clearAll}
+          danger
+          disabled
+          title="Função desabilitada por segurança"
+        >
           Limpar
         </ActionBtn>
       </div>
@@ -416,7 +422,13 @@ function GiftsPanel() {
         <ActionBtn icon={<Download size={14} />} onClick={exportJson}>
           Exportar
         </ActionBtn>
-        <ActionBtn icon={<Trash2 size={14} />} onClick={clearAll} danger>
+        <ActionBtn
+          icon={<Trash2 size={14} />}
+          onClick={clearAll}
+          danger
+          disabled
+          title="Função desabilitada por segurança"
+        >
           Limpar
         </ActionBtn>
       </div>
@@ -579,12 +591,16 @@ function ActionBtn({
   children,
   danger,
   primary,
+  disabled,
+  title,
 }: {
   icon: React.ReactNode
   onClick: () => void
   children: React.ReactNode
   danger?: boolean
   primary?: boolean
+  disabled?: boolean
+  title?: string
 }) {
   const style = danger
     ? 'text-red-500 border-red-200 hover:bg-red-500 hover:text-white hover:border-red-500'
@@ -595,7 +611,11 @@ function ActionBtn({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 font-sans text-xs uppercase tracking-[0.15em] px-4 py-2 rounded-full border transition-colors cursor-pointer ${style}`}
+      disabled={disabled}
+      title={title}
+      className={`flex items-center gap-2 font-sans text-xs uppercase tracking-[0.15em] px-4 py-2 rounded-full border transition-colors ${
+        disabled ? 'opacity-40 cursor-not-allowed' : `cursor-pointer ${style}`
+      }`}
     >
       {icon}
       {children}
