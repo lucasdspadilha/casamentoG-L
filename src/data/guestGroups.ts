@@ -49,11 +49,11 @@ export const guestGroups: GuestGroup[] = [
     ],
   },
   {
-    id: 'emerson-josi',
-    label: 'Emerson e Josi',
+    id: 'emerson-josiely',
+    label: 'Emerson e Josiely',
     guests: [
       { id: 'emerson', name: 'Emerson' },
-      { id: 'josi', name: 'Josi' },
+      { id: 'josiely', name: 'Josiely' },
     ],
   },
   {
@@ -157,12 +157,14 @@ export const guestGroups: GuestGroup[] = [
     ],
   },
   {
-    id: 'kesya-isabela',
-    label: 'Kesya e Isabela',
-    guests: [
-      { id: 'kesya', name: 'Kesya' },
-      { id: 'isabela', name: 'Isabela' },
-    ],
+    id: 'kesya-goncalves',
+    label: 'Kesya Gonçalves',
+    guests: [{ id: 'kesya-goncalves', name: 'Kesya Gonçalves' }],
+  },
+  {
+    id: 'isabela-mageste',
+    label: 'Isabela Mageste',
+    guests: [{ id: 'isabela-mageste', name: 'Isabela Mageste' }],
   },
   {
     id: 'familia-rossi-portella',
@@ -203,7 +205,7 @@ export const guestGroups: GuestGroup[] = [
     label: 'Família Marra',
     guests: [
       { id: 'marra-adriana', name: 'Adriana' },
-      { id: 'marra', name: 'Marra' },
+      { id: 'marra-luiz', name: 'Luiz' },
       { id: 'marra-valentina', name: 'Valentina' },
     ],
   },
@@ -217,11 +219,24 @@ export const guestGroups: GuestGroup[] = [
     ],
   },
   {
-    id: 'rafella-david',
-    label: 'Rafella e David',
+    id: 'rafaella-david',
+    label: 'Rafaella e David',
     guests: [
-      { id: 'rafella', name: 'Rafella' },
+      { id: 'rafaella', name: 'Rafaella' },
       { id: 'david', name: 'David' },
+    ],
+  },
+  {
+    id: 'charllote',
+    label: 'Charllote',
+    guests: [{ id: 'charllote', name: 'Charllote' }],
+  },
+  {
+    id: 'bruna-pedro-fotografo',
+    label: 'Bruna e Pedro',
+    guests: [
+      { id: 'bruna-fotografa', name: 'Bruna' },
+      { id: 'pedro-fotografo', name: 'Pedro' },
     ],
   },
 ]

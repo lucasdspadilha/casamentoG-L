@@ -774,13 +774,19 @@ function PendingRow({
 }: {
   group: { id: string; label: string; guests: { name: string }[] }
 }) {
+  const allInLabel = group.guests.every((x) =>
+    group.label.toLowerCase().includes(x.name.toLowerCase())
+  )
+
   return (
     <div className="bg-cream-dark/40 border border-sage-light/20 rounded-xl px-5 py-4 flex items-center justify-between gap-3 flex-wrap">
       <div>
         <p className="font-serif text-base text-charcoal-light">{group.label}</p>
-        <p className="font-sans text-xs text-charcoal-light/70 mt-0.5">
-          {group.guests.map((x) => x.name).join(' · ')}
-        </p>
+        {!allInLabel && (
+          <p className="font-sans text-xs text-charcoal-light/70 mt-0.5">
+            {group.guests.map((x) => x.name).join(' · ')}
+          </p>
+        )}
       </div>
       <span className="flex items-center gap-1.5 font-sans text-[10px] uppercase tracking-[0.15em] px-3 py-1.5 rounded-full bg-white text-charcoal-light/70">
         <Clock size={12} /> Pendente

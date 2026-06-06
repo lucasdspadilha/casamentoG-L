@@ -363,27 +363,34 @@ function SearchStep({
 
         {results.length > 0 && (
           <div className="flex flex-col gap-2">
-            {results.map((g) => (
-              <button
-                key={g.id}
-                type="button"
-                onClick={() => onPick(g)}
-                className="w-full text-left bg-white border border-sage-light/30 rounded-xl px-5 py-4 hover:border-sage hover:bg-sage-light/10 transition-all duration-200 cursor-pointer group"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-serif text-lg text-charcoal">{g.label}</p>
-                    <p className="font-sans text-xs text-charcoal-light mt-0.5">
-                      {g.guests.map((x) => x.name).join(' · ')}
-                    </p>
+            {results.map((g) => {
+              const allInLabel = g.guests.every((x) =>
+                g.label.toLowerCase().includes(x.name.toLowerCase())
+              )
+              return (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() => onPick(g)}
+                  className="w-full text-left bg-white border border-sage-light/30 rounded-xl px-5 py-4 hover:border-sage hover:bg-sage-light/10 transition-all duration-200 cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-serif text-lg text-charcoal">{g.label}</p>
+                      {!allInLabel && (
+                        <p className="font-sans text-xs text-charcoal-light mt-0.5">
+                          {g.guests.map((x) => x.name).join(' · ')}
+                        </p>
+                      )}
+                    </div>
+                    <Users
+                      size={18}
+                      className="text-sage-light shrink-0 group-hover:text-sage transition-colors"
+                    />
                   </div>
-                  <Users
-                    size={18}
-                    className="text-sage-light shrink-0 group-hover:text-sage transition-colors"
-                  />
-                </div>
-              </button>
-            ))}
+                </button>
+              )
+            })}
           </div>
         )}
       </div>
