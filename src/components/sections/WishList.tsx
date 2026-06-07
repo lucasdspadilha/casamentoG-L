@@ -1,15 +1,18 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Plus, QrCode } from 'lucide-react'
+import { Check, Plus, QrCode, Copy, X } from 'lucide-react'
 import { SectionTitle } from '../ui/SectionTitle'
 import { wishes, wishCategories, type WishItem } from '../../data/wishes'
 import { useCart } from '../../lib/useCart'
 import { parseAmount } from '../../lib/money'
+import { PIX_CONFIG } from '../../lib/pix'
 import { CustomAmountDialog } from '../wishlist/CustomAmountDialog'
 
 export function WishList() {
   const [activeCategory, setActiveCategory] = useState('Todos')
   const [customDialogFor, setCustomDialogFor] = useState<WishItem | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
   const { add, remove, isInCart } = useCart()
 
   const filtered =
@@ -35,6 +38,30 @@ export function WishList() {
     setCustomDialogFor(null)
   }
 
+  async function copyPixKey() {
+    setCopyError(false)
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(PIX_CONFIG.key)
+      } else {
+        const textarea = document.createElement('textarea')
+        textarea.value = PIX_CONFIG.key
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+        const ok = document.execCommand('copy')
+        document.body.removeChild(textarea)
+        if (!ok) throw new Error('execCommand falhou')
+      }
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 4000)
+    }
+  }
+
   return (
     <section id="presentes" className="py-24 md:py-32 px-6 bg-cream">
       <div className="max-w-5xl mx-auto">
@@ -58,6 +85,47 @@ export function WishList() {
             Adicione os itens ao carrinho, escolha quantos quiser, e gere
             um QR Code Pix com o valor total — em um só pagamento.
           </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 max-w-xl mx-auto text-center"
+        >
+          <span className="font-sans text-xs text-charcoal-light/60">
+            ou Pix direto:
+          </span>
+          <span className="font-sans text-xs text-charcoal-light select-all">
+            {PIX_CONFIG.key}
+          </span>
+          <button
+            type="button"
+            onClick={copyPixKey}
+            aria-label="Copiar chave Pix"
+            className={`inline-flex items-center gap-1 font-sans text-[10px] uppercase tracking-[0.1em] transition-colors cursor-pointer ${
+              copyError
+                ? 'text-red-500'
+                : copied
+                  ? 'text-sage'
+                  : 'text-charcoal-light/60 hover:text-sage'
+            }`}
+          >
+            {copyError ? (
+              <>
+                <X size={10} /> erro
+              </>
+            ) : copied ? (
+              <>
+                <Check size={10} /> copiado
+              </>
+            ) : (
+              <>
+                <Copy size={10} /> copiar
+              </>
+            )}
+          </button>
         </motion.div>
 
         <motion.div
