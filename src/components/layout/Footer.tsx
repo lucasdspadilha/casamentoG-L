@@ -4,9 +4,11 @@ export function Footer() {
   return (
     <footer className="bg-charcoal text-cream py-16 px-6">
       <div className="max-w-4xl mx-auto flex flex-col items-center gap-6 text-center">
-        <div className="font-serif text-4xl font-light tracking-widest">
-          G <span className="text-sage-light mx-2">&</span> L
-        </div>
+        <img
+          src="/logo3.png"
+          alt="Giulia & Lucas"
+          className="h-40 w-auto select-none invert hue-rotate-180 opacity-70"
+        />
 
         <p className="font-sans text-xs tracking-[0.2em] uppercase text-cream/50">
           07 de Setembro de 2026

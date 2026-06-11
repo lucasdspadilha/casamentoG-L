@@ -112,37 +112,6 @@ export function Ceremony() {
             <ExternalLink size={11} />
           </a>
         </motion.div>
-
-        {/* Schedule */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7, delay: 0.3 }}
-          className="mt-16 max-w-sm mx-auto"
-        >
-          <p className="font-sans text-[10px] tracking-[0.25em] uppercase text-cream/40 text-center mb-8">
-            Programação do dia
-          </p>
-          <div className="flex flex-col gap-0 border-l border-sage-light/20 pl-6">
-            {[
-              { time: '10h30', event: 'Recepção dos convidados' },
-              { time: '11h00', event: 'Cerimônia' },
-              { time: '11h30', event: 'Fotos' },
-              { time: '11h45', event: 'Brunch & Party' },
-              { time: '15h00', event: 'Bolo & brinde' },
-              { time: '16h30', event: 'Fim da Festa' },
-            ].map((item, i) => (
-              <div key={i} className="relative flex items-start gap-4 pb-6">
-                <div className="absolute -left-[25px] top-1.5 w-2 h-2 rounded-full bg-sage border-2 border-charcoal" />
-                <span className="font-sans text-xs text-sage-light w-12 shrink-0 pt-0.5">
-                  {item.time}
-                </span>
-                <span className="font-sans text-sm text-cream/70">{item.event}</span>
-              </div>
-            ))}
-          </div>
-        </motion.div>
       </div>
     </section>
   )

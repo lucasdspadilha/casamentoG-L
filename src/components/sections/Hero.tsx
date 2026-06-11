@@ -42,38 +42,38 @@ function CountdownUnit({ value, label }: { value: number; label: string }) {
   )
 }
 
-// Botanical SVG decorations
-function BotanicalLeft() {
-  return (
-    <svg
-      viewBox="0 0 200 400"
-      className="absolute left-0 bottom-0 h-[60%] md:h-[80%] opacity-20 text-sage"
-      fill="currentColor"
-      aria-hidden
-    >
-      <path d="M20 380 Q60 300 40 220 Q20 140 70 80 Q50 160 80 230 Q100 300 60 380Z" />
-      <path d="M50 360 Q120 310 100 240 Q80 180 130 130 Q100 200 120 260 Q140 320 80 370Z" opacity="0.6" />
-      <path d="M10 320 Q80 290 70 230 Q60 180 100 150 Q75 210 85 260 Q95 310 30 330Z" opacity="0.4" />
-      <path d="M60 400 L55 280 M55 280 Q30 260 10 230 M55 280 Q80 255 90 220" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-    </svg>
-  )
-}
+// Botanical SVG decorations — comentado temporariamente pra testar PNG do logo
+// function BotanicalLeft() {
+//   return (
+//     <svg
+//       viewBox="0 0 200 400"
+//       className="absolute left-0 bottom-0 h-[60%] md:h-[80%] opacity-20 text-sage"
+//       fill="currentColor"
+//       aria-hidden
+//     >
+//       <path d="M20 380 Q60 300 40 220 Q20 140 70 80 Q50 160 80 230 Q100 300 60 380Z" />
+//       <path d="M50 360 Q120 310 100 240 Q80 180 130 130 Q100 200 120 260 Q140 320 80 370Z" opacity="0.6" />
+//       <path d="M10 320 Q80 290 70 230 Q60 180 100 150 Q75 210 85 260 Q95 310 30 330Z" opacity="0.4" />
+//       <path d="M60 400 L55 280 M55 280 Q30 260 10 230 M55 280 Q80 255 90 220" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+//     </svg>
+//   )
+// }
 
-function BotanicalRight() {
-  return (
-    <svg
-      viewBox="0 0 200 400"
-      className="absolute right-0 top-0 h-[55%] md:h-[70%] opacity-20 text-sage"
-      fill="currentColor"
-      aria-hidden
-    >
-      <path d="M180 20 Q140 100 160 180 Q180 260 130 320 Q150 240 120 170 Q100 100 140 20Z" />
-      <path d="M150 40 Q80 90 100 160 Q120 220 70 270 Q100 200 80 140 Q60 80 120 30Z" opacity="0.6" />
-      <path d="M190 80 Q120 110 130 170 Q140 220 100 250 Q125 190 115 140 Q105 90 170 70Z" opacity="0.4" />
-      <path d="M140 0 L145 120 M145 120 Q170 140 190 170 M145 120 Q120 145 110 180" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-    </svg>
-  )
-}
+// function BotanicalRight() {
+//   return (
+//     <svg
+//       viewBox="0 0 200 400"
+//       className="absolute right-0 top-0 h-[55%] md:h-[70%] opacity-20 text-sage"
+//       fill="currentColor"
+//       aria-hidden
+//     >
+//       <path d="M180 20 Q140 100 160 180 Q180 260 130 320 Q150 240 120 170 Q100 100 140 20Z" />
+//       <path d="M150 40 Q80 90 100 160 Q120 220 70 270 Q100 200 80 140 Q60 80 120 30Z" opacity="0.6" />
+//       <path d="M190 80 Q120 110 130 170 Q140 220 100 250 Q125 190 115 140 Q105 90 170 70Z" opacity="0.4" />
+//       <path d="M140 0 L145 120 M145 120 Q170 140 190 170 M145 120 Q120 145 110 180" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+//     </svg>
+//   )
+// }
 
 export function Hero() {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(getTimeLeft())
@@ -90,23 +90,22 @@ export function Hero() {
       id="hero"
       className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-cream px-6 pt-24 pb-16"
     >
-      <BotanicalLeft />
-      <BotanicalRight />
+      {/* Decoração botânica usando folha.png */}
+      <img
+        src="/folha.png"
+        aria-hidden
+        className="absolute left-0 bottom-0 h-[60%] md:h-[80%] w-auto opacity-20 -translate-x-1/4 rotate-180 pointer-events-none select-none"
+      />
+      <img
+        src="/folha.png"
+        aria-hidden
+        className="absolute right-0 top-0 h-[55%] md:h-[70%] w-auto opacity-20 translate-x-1/4 pointer-events-none select-none"
+      />
 
       {/* Subtle texture overlay */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(122,158,126,0.06)_0%,_transparent_60%)]" />
 
       <div className="relative z-10 flex flex-col items-center text-center max-w-2xl">
-        {/* Tag */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="font-sans text-xs tracking-[0.3em] uppercase text-sage mb-8"
-        >
-          Você está convidado para celebrar
-        </motion.p>
-
         {/* Names */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
@@ -168,7 +167,7 @@ export function Hero() {
         </motion.div>
 
         {/* CTA */}
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 1.4 }}
@@ -183,7 +182,7 @@ export function Hero() {
           >
             Confirmar Presença
           </Link>
-        </motion.div>
+        </motion.div> */}
       </div>
 
       {/* Scroll indicator */}

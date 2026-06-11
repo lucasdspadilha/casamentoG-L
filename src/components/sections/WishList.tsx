@@ -82,8 +82,7 @@ export function WishList() {
             <QrCode size={18} />
           </div>
           <p className="font-sans text-xs text-charcoal-light/80 leading-relaxed text-center sm:text-left">
-            Adicione os itens ao carrinho, escolha quantos quiser, e gere
-            um QR Code Pix com o valor total — em um só pagamento.
+            Adicione os itens ao carrinho, e gerara automaticamente um QR Code Pix com o valor total — em um só pagamento.
           </p>
         </motion.div>
 

@@ -34,16 +34,19 @@ export function Navbar() {
         }`}
       >
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between w-full">
-          {/* Monogram */}
+          {/* Logo */}
           <Link
             to="hero"
             smooth
             duration={800}
             className="cursor-pointer"
+            aria-label="Giulia & Lucas"
           >
-            <span className="font-serif text-xl font-normal tracking-widest text-charcoal select-none">
-              G <span className="text-sage-light">&</span> L
-            </span>
+            <img
+              src="/logo3.png"
+              alt="Giulia & Lucas"
+              className="h-15 w-auto select-none"
+            />
           </Link>
 
           {/* Desktop nav */}
@@ -87,9 +90,11 @@ export function Navbar() {
             transition={{ duration: 0.25 }}
             className="fixed inset-0 z-40 bg-cream/98 backdrop-blur-sm flex flex-col items-center justify-center gap-8 md:hidden"
           >
-            <div className="font-serif text-3xl font-light tracking-widest text-charcoal mb-8">
-              G <span className="text-sage-light mx-2">&</span> L
-            </div>
+            <img
+              src="/logo3.png"
+              alt="Giulia & Lucas"
+              className="h-20 w-auto mb-8 select-none"
+            />
             {navLinks.map((link) => (
               <Link
                 key={link.to}

@@ -272,4 +272,13 @@ export const wishes: WishItem[] = [
     emoji: '🐶',
     price: 'R$ 300',
   },
+  {
+    id: 29,
+    category: 'Casa',
+    title: 'Máquina de lavar louça',
+    description:
+      'Pra recuperar as noites de domingo. Promessa de menos pia, mais sofá.',
+    emoji: '🍽️',
+    price: 'R$ 1.000',
+  },
 ]
