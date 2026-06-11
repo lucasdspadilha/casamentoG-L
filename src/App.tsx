@@ -34,8 +34,8 @@ function App() {
         <Ceremony />
         <Gallery />
         <WishList />
-        <Faq />
         <Rsvp />
+        <Faq />
       </main>
       <Footer />
       <CartFloating />

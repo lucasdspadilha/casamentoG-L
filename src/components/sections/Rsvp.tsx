@@ -129,7 +129,7 @@ export function Rsvp() {
   }
 
   return (
-    <section id="rsvp" className="py-24 md:py-32 px-6 bg-cream">
+    <section id="rsvp" className="py-24 md:py-32 px-6 bg-cream-dark">
       <div className="max-w-xl mx-auto">
         <SectionTitle
           label="Até 10 de Agosto de 2026"

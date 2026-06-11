@@ -48,7 +48,7 @@ function FaqItem({ question, answer, index }: { question: string; answer: string
 
 export function Faq() {
   return (
-    <section className="py-24 md:py-32 px-6 bg-cream-dark">
+    <section className="py-24 md:py-32 px-6 bg-cream">
       <div className="max-w-2xl mx-auto">
         <SectionTitle
           label="Dúvidas frequentes"
