@@ -239,4 +239,9 @@ export const guestGroups: GuestGroup[] = [
       { id: 'pedro-fotografo', name: 'Pedro' },
     ],
   },
+  {
+    id: 'marcia-rossi',
+    label: 'Marcia Rossi',
+    guests: [{ id: 'marcia-rossi', name: 'Marcia Rossi' }],
+  },
 ]
