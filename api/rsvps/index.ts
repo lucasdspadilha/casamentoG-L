@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { supabase } from '../_lib/supabase.js'
-import { requireSessionUser } from '../_lib/session.js'
+import { getSessionUser, requireSessionUser } from '../_lib/session.js'
 
 interface IncomingRsvp {
   groupId: string
@@ -9,6 +9,7 @@ interface IncomingRsvp {
   plusOneName?: string
   phone?: string
   message?: string
+  setByAdmin?: boolean
 }
 
 interface DbRsvp {
@@ -23,6 +24,7 @@ interface DbRsvp {
   previous_versions: unknown[]
   submitted_at: string
   updated_at: string
+  set_by_admin: boolean | null
 }
 
 function toApi(row: DbRsvp) {
@@ -36,6 +38,8 @@ function toApi(row: DbRsvp) {
     editCount: row.edit_count ?? 0,
     previousVersions: row.previous_versions ?? [],
     submittedAt: row.submitted_at,
+    updatedAt: row.updated_at,
+    setByAdmin: row.set_by_admin ?? false,
   }
 }
 
@@ -70,6 +74,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Invalid attendingGuestIds' })
     }
 
+    // setByAdmin só vale se houver sessão admin ativa.
+    // Convidado anônimo não pode forjar esse flag (fix #1 do code review).
+    const sessionUser = await getSessionUser(req)
+    const isAdmin = !!sessionUser
+    const setByAdmin = isAdmin ? (body.setByAdmin ?? false) : false
+
     // Verifica existência atual pra mesclar histórico de edições
     const { data: existing } = await supabase
       .from('rsvps')
@@ -95,10 +105,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               phone: existing.phone,
               message: existing.message,
               submittedAt: existing.submitted_at,
+              setByAdmin: existing.set_by_admin ?? false,
             },
           ]
         : [],
       submitted_at: existing ? existing.submitted_at : new Date().toISOString(),
+      set_by_admin: setByAdmin,
     }
 
     const { data, error } = await supabase

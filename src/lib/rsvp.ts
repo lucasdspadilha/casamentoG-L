@@ -5,6 +5,7 @@ export interface PreviousVersion {
   phone?: string
   message?: string
   submittedAt: string
+  setByAdmin?: boolean
 }
 
 export interface RsvpEntry {
@@ -15,8 +16,10 @@ export interface RsvpEntry {
   phone?: string
   message?: string
   submittedAt: string
+  updatedAt?: string
   editCount?: number
   previousVersions?: PreviousVersion[]
+  setByAdmin?: boolean
 }
 
 async function jsonOrThrow<T>(res: Response): Promise<T> {
@@ -54,6 +57,7 @@ export async function saveRsvp(entry: RsvpEntry): Promise<RsvpEntry> {
       plusOneName: entry.plusOneName,
       phone: entry.phone,
       message: entry.message,
+      setByAdmin: entry.setByAdmin ?? false,
     }),
   })
   return jsonOrThrow<RsvpEntry>(res)

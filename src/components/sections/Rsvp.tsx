@@ -87,7 +87,14 @@ export function Rsvp() {
     try {
       const existing = await getRsvpByGroup(group.id)
       if (existing) {
-        // Já existe RSVP — pede confirmação antes de sobrescrever.
+        // Se foi o admin que pré-marcou, salva direto sem incomodar o convidado.
+        // O histórico no admin ainda preserva a marcação original.
+        if (existing.setByAdmin) {
+          await saveRsvp(entry)
+          setStep('success')
+          return
+        }
+        // Caso contrário (RSVP feito pelo próprio convidado antes), pede confirmação.
         setPendingEntry(entry)
         setExistingEntry(existing)
         return
@@ -276,8 +283,8 @@ function OverwriteDialog({
         </div>
 
         <p className="font-sans text-sm text-charcoal-light leading-relaxed">
-          Tem certeza que quer <strong>substituir</strong> essa confirmação pela
-          nova? Se foi engano, é só cancelar e voltar.
+          Tem certeza que quer <strong>substituir</strong> essa confirmação
+          pela nova? Se foi engano, é só cancelar e voltar.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-2">

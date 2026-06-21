@@ -20,7 +20,9 @@ import { ManualGiftDialog } from './ManualGiftDialog'
 import { guestGroups } from '../../data/guestGroups'
 import {
   getAllRsvps,
+  getRsvpByGroup,
   clearAllRsvps,
+  saveRsvp,
   type RsvpEntry,
   type PreviousVersion,
 } from '../../lib/rsvp'
@@ -196,6 +198,7 @@ function RsvpPanel() {
   const [rsvps, setRsvps] = useState<RsvpEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<FilterTab>('all')
+  const [markingId, setMarkingId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -218,8 +221,60 @@ function RsvpPanel() {
     const declined = rsvps.filter((r) => r.attending === 'no')
     const respondedIds = new Set(rsvps.map((r) => r.groupId))
     const pendingGroups = guestGroups.filter((g) => !respondedIds.has(g.id))
-    return { confirmed, declined, pendingGroups }
+    const pendingPeople = pendingGroups.reduce(
+      (sum, g) =>
+        sum + g.guests.filter((x) => !x.isPlusOnePlaceholder).length,
+      0
+    )
+    return { confirmed, declined, pendingGroups, pendingPeople }
   }, [rsvps])
+
+  async function markNotAttending(groupId: string) {
+    if (markingId) return
+    const group = guestGroups.find((g) => g.id === groupId)
+    if (!group) return
+
+    setMarkingId(groupId)
+    try {
+      // Re-checa no servidor — pode ter outra aba aberta com edição recente.
+      const existing = await getRsvpByGroup(groupId)
+      if (existing) {
+        const existingLabel =
+          existing.attending === 'yes' ? 'CONFIRMOU presença' : 'já marcou que não vai'
+        if (
+          !confirm(
+            `Atenção: essa família ${existingLabel} em ${new Date(
+              existing.submittedAt
+            ).toLocaleString('pt-BR')}.\n\nQuer SOBRESCREVER com "não vai" marcado pelo admin?`
+          )
+        ) {
+          return
+        }
+      } else if (
+        !confirm(
+          `Marcar "${group.label}" como NÃO vai? (eles ainda podem mudar de ideia depois pelo site)`
+        )
+      ) {
+        return
+      }
+
+      await saveRsvp({
+        groupId,
+        attending: 'no',
+        attendingGuestIds: [],
+        submittedAt: new Date().toISOString(),
+        setByAdmin: true,
+      })
+      await load()
+    } catch (err) {
+      alert(
+        'Erro ao marcar: ' +
+          (err instanceof Error ? err.message : 'tente novamente')
+      )
+    } finally {
+      setMarkingId(null)
+    }
+  }
 
   const rows = useMemo(() => {
     type RsvpRowItem = {
@@ -318,7 +373,11 @@ function RsvpPanel() {
           value={stats.confirmed.length}
         />
         <StatCard label="Não vão" value={stats.declined.length} />
-        <StatCard label="Pendentes" value={stats.pendingGroups.length} />
+        <StatCard
+          label="Convites pendentes"
+          value={stats.pendingGroups.length}
+          hint={`(${stats.pendingPeople} pessoas)`}
+        />
       </div>
 
       <div className="flex gap-2 flex-wrap mb-6">
@@ -335,7 +394,7 @@ function RsvpPanel() {
           Não vão ({stats.declined.length})
         </TabBtn>
         <TabBtn active={tab === 'pending'} onClick={() => setTab('pending')}>
-          Pendentes ({stats.pendingGroups.length})
+          Convites pendentes ({stats.pendingGroups.length} · {stats.pendingPeople} pessoas)
         </TabBtn>
       </div>
 
@@ -349,7 +408,12 @@ function RsvpPanel() {
           row.kind === 'rsvp' ? (
             <RsvpRow key={row.rsvp.groupId} rsvp={row.rsvp} group={row.group} />
           ) : (
-            <PendingRow key={row.group.id} group={row.group} />
+            <PendingRow
+              key={row.group.id}
+              group={row.group}
+              onMarkNotAttending={markNotAttending}
+              submitting={markingId === row.group.id}
+            />
           )
         )}
       </div>
@@ -509,11 +573,13 @@ function GiftRow({ gift }: { gift: GiftRecord }) {
 function StatCard({
   label,
   value,
+  hint,
   highlight,
   asText,
 }: {
   label: string
   value: number | string
+  hint?: string
   highlight?: boolean
   asText?: boolean
 }) {
@@ -532,8 +598,17 @@ function StatCard({
       >
         {label}
       </p>
-      <p className={`font-serif mt-2 ${asText ? 'text-2xl' : 'text-4xl'}`}>
+      <p className={`font-serif mt-2 leading-none ${asText ? 'text-2xl' : 'text-4xl'}`}>
         {value}
+        {hint && (
+          <span
+            className={`font-sans ml-2 text-xs tracking-normal ${
+              highlight ? 'text-cream/70' : 'text-charcoal-light/70'
+            }`}
+          >
+            {hint}
+          </span>
+        )}
       </p>
     </div>
   )
@@ -656,8 +731,19 @@ function RsvpRow({
           <p className="font-sans text-[10px] tracking-[0.15em] uppercase text-charcoal-light mt-0.5">
             {new Date(rsvp.submittedAt).toLocaleString('pt-BR')}
           </p>
+          {editCount > 0 && rsvp.updatedAt && (
+            <p className="font-sans text-[10px] tracking-[0.15em] uppercase text-charcoal-light/60 mt-0.5">
+              última edição:{' '}
+              {new Date(rsvp.updatedAt).toLocaleString('pt-BR')}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          {rsvp.setByAdmin && (
+            <span className="flex items-center gap-1 font-sans text-[10px] uppercase tracking-[0.15em] px-3 py-1.5 rounded-full bg-charcoal/10 text-charcoal-light border border-charcoal/20">
+              marcado pelo admin
+            </span>
+          )}
           {editCount > 0 && (
             <span className="flex items-center gap-1 font-sans text-[10px] uppercase tracking-[0.15em] px-3 py-1.5 rounded-full bg-gold/20 text-gold border border-gold/30">
               editado {editCount}×
@@ -765,6 +851,11 @@ function HistoryItem({
         >
           {yes ? 'Confirmou' : 'Não ia'}
         </span>
+        {version.setByAdmin && (
+          <span className="font-sans text-[9px] uppercase tracking-[0.15em] px-2 py-0.5 rounded-full bg-charcoal/10 text-charcoal-light">
+            por admin
+          </span>
+        )}
       </div>
 
       {yes && names.length > 0 && (
@@ -791,8 +882,12 @@ function HistoryItem({
 
 function PendingRow({
   group,
+  onMarkNotAttending,
+  submitting,
 }: {
-  group: { id: string; label: string; guests: { name: string }[] }
+  group: (typeof guestGroups)[number]
+  onMarkNotAttending: (groupId: string) => void
+  submitting: boolean
 }) {
   const allInLabel = group.guests.every((x) =>
     group.label.toLowerCase().includes(x.name.toLowerCase())
@@ -808,9 +903,20 @@ function PendingRow({
           </p>
         )}
       </div>
-      <span className="flex items-center gap-1.5 font-sans text-[10px] uppercase tracking-[0.15em] px-3 py-1.5 rounded-full bg-white text-charcoal-light/70">
-        <Clock size={12} /> Pendente
-      </span>
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          type="button"
+          onClick={() => onMarkNotAttending(group.id)}
+          disabled={submitting}
+          className="flex items-center gap-1.5 font-sans text-[10px] uppercase tracking-[0.15em] px-3 py-1.5 rounded-full border border-charcoal/20 text-charcoal-light hover:bg-charcoal hover:text-cream hover:border-charcoal transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-charcoal-light"
+          title="Marca como não vai (eles ainda podem mudar pelo site)"
+        >
+          <X size={12} /> {submitting ? 'Salvando...' : 'Não vai'}
+        </button>
+        <span className="flex items-center gap-1.5 font-sans text-[10px] uppercase tracking-[0.15em] px-3 py-1.5 rounded-full bg-white text-charcoal-light/70">
+          <Clock size={12} /> Pendente
+        </span>
+      </div>
     </div>
   )
 }

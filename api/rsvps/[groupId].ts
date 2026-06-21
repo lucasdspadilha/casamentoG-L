@@ -16,7 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { data, error } = await supabase
     .from('rsvps')
     .select(
-      'group_id, attending, attending_guest_ids, plus_one_name, edit_count, submitted_at'
+      'group_id, attending, attending_guest_ids, plus_one_name, edit_count, submitted_at, set_by_admin'
     )
     .eq('group_id', groupId)
     .maybeSingle()
@@ -31,5 +31,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     plusOneName: data.plus_one_name ?? undefined,
     editCount: data.edit_count ?? 0,
     submittedAt: data.submitted_at,
+    setByAdmin: data.set_by_admin ?? false,
   })
 }

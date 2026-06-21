@@ -96,9 +96,9 @@ export const guestGroups: GuestGroup[] = [
   },
   {
     id: 'dita-acompanhante',
-    label: 'Dita e acompanhante',
+    label: 'Fatima Benedita e acompanhante',
     guests: [
-      { id: 'dita', name: 'Dita' },
+      { id: 'dita', name: 'Fatima Benedita' },
       {
         id: 'dita-plus-one',
         name: 'Acompanhante',
