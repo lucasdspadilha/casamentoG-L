@@ -38,6 +38,7 @@ export const guestGroups: GuestGroup[] = [
       { id: 'teixeira-ze', name: 'Ze' },
       { id: 'teixeira-henrique', name: 'Henrique' },
       { id: 'teixeira-laura', name: 'Laura' },
+      { id: 'teixeira-julia', name: 'Julia' },
     ],
   },
   {
