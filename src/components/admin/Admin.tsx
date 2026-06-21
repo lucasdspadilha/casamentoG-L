@@ -226,7 +226,14 @@ function RsvpPanel() {
         sum + g.guests.filter((x) => !x.isPlusOnePlaceholder).length,
       0
     )
-    return { confirmed, declined, pendingGroups, pendingPeople }
+    const declinedPeople = declined.reduce((sum, r) => {
+      const group = guestGroups.find((g) => g.id === r.groupId)
+      if (!group) return sum
+      return (
+        sum + group.guests.filter((x) => !x.isPlusOnePlaceholder).length
+      )
+    }, 0)
+    return { confirmed, declined, pendingGroups, pendingPeople, declinedPeople }
   }, [rsvps])
 
   async function markNotAttending(groupId: string) {
@@ -372,7 +379,11 @@ function RsvpPanel() {
           label="Famílias confirmadas"
           value={stats.confirmed.length}
         />
-        <StatCard label="Não vão" value={stats.declined.length} />
+        <StatCard
+          label="Não vão"
+          value={stats.declined.length}
+          hint={`(${stats.declinedPeople} pessoas)`}
+        />
         <StatCard
           label="Convites pendentes"
           value={stats.pendingGroups.length}
