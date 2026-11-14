@@ -1,9 +1,16 @@
+import type { EventId } from './guestGroups'
+
 export interface StoryEvent {
   year: string
   title: string
   description: string
   emoji: string
   img?: string // caminho relativo a /public — undefined = sem slot de imagem
+  /**
+   * Restringe o card a landings específicas.
+   * undefined/[] = aparece em todas.
+   */
+  landings?: EventId[]
 }
 
 export const storyEvents: StoryEvent[] = [
@@ -45,6 +52,23 @@ export const storyEvents: StoryEvent[] = [
     description:
       'Em 07 de setembro, prometemos um ao outro diante de todos que amamos. O começo do capítulo mais bonito que já escrevemos juntos.',
     emoji: '🌿',
-    img: `${import.meta.env.BASE_URL}images/story/bar_botanico.jpg`
+    img: `${import.meta.env.BASE_URL}images/story/bar_botanico.jpg`,
+  },
+  {
+    year: 'Setembro · 2026',
+    title: 'Lua de mel na Itália',
+    description:
+      'Logo depois do "sim", pegamos um avião rumo à Itália — Roma, Toscana, Cinque Terre, Veneza, Costa Amalfitana. Dias de queijo, vinho, pasta e muita história pra contar.',
+    emoji: '✈️',
+    img: `${import.meta.env.BASE_URL}images/story/amalfi.webp`,
+  },
+  {
+    year: '07 Fev · 2027',
+    title: 'Celebração em Colíder',
+    description:
+      'A família do noivo tava distante demais pra celebrar em São Paulo — então nós dois levamos a festa pra Colíder. Um churrasco pra matar a saudade, do jeito que o Mato Grosso sabe fazer.',
+    emoji: '🔥',
+    img: `${import.meta.env.BASE_URL}images/story/lago.jpg`,
+    landings: ['churrasco-mt'],
   },
 ]

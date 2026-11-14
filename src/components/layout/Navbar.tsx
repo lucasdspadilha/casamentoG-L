@@ -7,6 +7,7 @@ const navLinks = [
   { to: 'nossa-historia', label: 'Nossa História' },
   { to: 'cerimonia', label: 'Cerimônia' },
   { to: 'galeria', label: 'Galeria' },
+  { to: 'o-dia', label: 'O Grande Dia' },
   { to: 'presentes', label: 'Presentes' },
   { to: 'rsvp', label: 'Confirmar Presença' },
 ]

@@ -1,15 +1,7 @@
-import { Navbar } from './components/layout/Navbar'
-import { Footer } from './components/layout/Footer'
-import { Hero } from './components/sections/Hero'
-import { OurStory } from './components/sections/OurStory'
-import { Ceremony } from './components/sections/Ceremony'
-import { Gallery } from './components/sections/Gallery'
-import { WishList } from './components/sections/WishList'
-import { Faq } from './components/sections/Faq'
-import { Rsvp } from './components/sections/Rsvp'
+import { useEffect } from 'react'
 import { Admin } from './components/admin/Admin'
-import { CartFloating } from './components/wishlist/CartFloating'
-import { CartProvider } from './lib/cart'
+import { CasamentoLanding } from './pages/CasamentoLanding'
+import { ChurrascoMtLanding } from './pages/ChurrascoMtLanding'
 import { useRoute } from './lib/useHashRoute'
 
 function App() {
@@ -21,26 +13,27 @@ function App() {
     hash === '#/admin' ||
     hash === '#admin'
 
-  if (isAdmin) {
-    return <Admin />
-  }
+  // /setembro é a URL canônica do casamento. /casamento e #/casamento
+  // continuam aceitos pra não quebrar links antigos — redirecionam na barra.
+  const isLegacyCasamento =
+    pathname === '/casamento' ||
+    pathname === '/casamento/' ||
+    hash === '#/casamento'
 
-  return (
-    <CartProvider>
-      <Navbar />
-      <main>
-        <Hero />
-        <OurStory />
-        <Ceremony />
-        <Gallery />
-        <WishList />
-        <Rsvp />
-        <Faq />
-      </main>
-      <Footer />
-      <CartFloating />
-    </CartProvider>
-  )
+  const isSetembro =
+    pathname === '/setembro' ||
+    pathname === '/setembro/' ||
+    hash === '#/setembro'
+
+  useEffect(() => {
+    if (isLegacyCasamento && typeof window !== 'undefined') {
+      window.history.replaceState({}, '', '/setembro')
+    }
+  }, [isLegacyCasamento])
+
+  if (isAdmin) return <Admin />
+  if (isSetembro || isLegacyCasamento) return <CasamentoLanding />
+  return <ChurrascoMtLanding />
 }
 
 export default App

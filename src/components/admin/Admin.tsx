@@ -17,7 +17,8 @@ import {
   History,
 } from 'lucide-react'
 import { ManualGiftDialog } from './ManualGiftDialog'
-import { guestGroups } from '../../data/guestGroups'
+import { groupsByEvent } from '../../lib/guests'
+import type { EventId, GuestGroup } from '../../data/guestGroups'
 import {
   getAllRsvps,
   getRsvpByGroup,
@@ -37,12 +38,25 @@ import { login, logout, getCurrentUser, type AuthUser } from '../../lib/auth'
 type MainTab = 'rsvp' | 'gifts'
 type FilterTab = 'all' | 'confirmed' | 'declined' | 'pending'
 
+const EVENT_LABELS: Record<EventId, { short: string; long: string }> = {
+  casamento: { short: 'Casamento SP', long: 'Giulia & Lucas · 07 set 2026' },
+  'churrasco-mt': {
+    short: 'Churrasco MT',
+    long: 'Comemoração família MT · 07 fev 2027',
+  },
+}
+
 export function Admin() {
+  // DEV ONLY: inicia já logado em dev local (as funções /api não existem
+  // no vite dev). Em preview/produção o fluxo real roda normalmente.
   const [authState, setAuthState] = useState<
     'loading' | 'unauthed' | AuthUser
-  >('loading')
+  >(() =>
+    import.meta.env.DEV ? { id: 'dev-local', email: 'dev@local' } : 'loading'
+  )
 
   useEffect(() => {
+    if (import.meta.env.DEV) return
     getCurrentUser()
       .then((user) => setAuthState(user ?? 'unauthed'))
       .catch(() => setAuthState('unauthed'))
@@ -146,7 +160,11 @@ function LoginScreen({ onSuccess }: { onSuccess: (u: AuthUser) => void }) {
 }
 
 function Dashboard({ onLogout }: { onLogout: () => void }) {
+  const [eventId, setEventId] = useState<EventId>('casamento')
   const [mainTab, setMainTab] = useState<MainTab>('rsvp')
+
+  // Churrasco MT não tem painel de Presentes (não há wishlist nesse evento).
+  const showGifts = eventId === 'casamento'
 
   async function doLogout() {
     await logout()
@@ -162,7 +180,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               Painel dos noivos
             </h1>
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-charcoal-light mt-1">
-              Giulia & Lucas · 07 set 2026
+              {EVENT_LABELS[eventId].long}
             </p>
           </div>
           <button
@@ -173,6 +191,25 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           </button>
         </header>
 
+        <div className="flex gap-2 mb-6 flex-wrap">
+          {(['casamento', 'churrasco-mt'] as EventId[]).map((ev) => (
+            <button
+              key={ev}
+              onClick={() => {
+                setEventId(ev)
+                if (ev === 'churrasco-mt') setMainTab('rsvp')
+              }}
+              className={`font-sans text-xs uppercase tracking-[0.15em] px-5 py-2 rounded-full border transition-colors cursor-pointer ${
+                eventId === ev
+                  ? 'bg-charcoal text-cream border-charcoal'
+                  : 'bg-white text-charcoal-light border-sage-light/40 hover:border-charcoal'
+              }`}
+            >
+              {EVENT_LABELS[ev].short}
+            </button>
+          ))}
+        </div>
+
         <div className="flex gap-2 mb-8 border-b border-sage-light/30">
           <MainTabBtn
             active={mainTab === 'rsvp'}
@@ -180,37 +217,45 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           >
             <Users size={14} /> Confirmações
           </MainTabBtn>
-          <MainTabBtn
-            active={mainTab === 'gifts'}
-            onClick={() => setMainTab('gifts')}
-          >
-            <Gift size={14} /> Presentes
-          </MainTabBtn>
+          {showGifts && (
+            <MainTabBtn
+              active={mainTab === 'gifts'}
+              onClick={() => setMainTab('gifts')}
+            >
+              <Gift size={14} /> Presentes
+            </MainTabBtn>
+          )}
         </div>
 
-        {mainTab === 'rsvp' ? <RsvpPanel /> : <GiftsPanel />}
+        {mainTab === 'rsvp' ? (
+          <RsvpPanel eventId={eventId} />
+        ) : (
+          <GiftsPanel />
+        )}
       </div>
     </section>
   )
 }
 
-function RsvpPanel() {
+function RsvpPanel({ eventId }: { eventId: EventId }) {
   const [rsvps, setRsvps] = useState<RsvpEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<FilterTab>('all')
   const [markingId, setMarkingId] = useState<string | null>(null)
 
+  const guestGroups = useMemo(() => groupsByEvent(eventId), [eventId])
+
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await getAllRsvps()
+      const data = await getAllRsvps(eventId)
       setRsvps(data)
     } catch {
       setRsvps([])
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [eventId])
 
   useEffect(() => {
     load()
@@ -234,7 +279,7 @@ function RsvpPanel() {
       )
     }, 0)
     return { confirmed, declined, pendingGroups, pendingPeople, declinedPeople }
-  }, [rsvps])
+  }, [rsvps, guestGroups])
 
   async function markNotAttending(groupId: string) {
     if (markingId) return
@@ -244,7 +289,7 @@ function RsvpPanel() {
     setMarkingId(groupId)
     try {
       // Re-checa no servidor — pode ter outra aba aberta com edição recente.
-      const existing = await getRsvpByGroup(groupId)
+      const existing = await getRsvpByGroup(groupId, eventId)
       if (existing) {
         const existingLabel =
           existing.attending === 'yes' ? 'CONFIRMOU presença' : 'já marcou que não vai'
@@ -267,6 +312,7 @@ function RsvpPanel() {
 
       await saveRsvp({
         groupId,
+        eventId,
         attending: 'no',
         attendingGuestIds: [],
         submittedAt: new Date().toISOString(),
@@ -319,11 +365,14 @@ function RsvpPanel() {
         (g): PendingRowItem => ({ kind: 'pending', group: g })
       ),
     ]
-  }, [tab, stats])
+  }, [tab, stats, guestGroups])
 
   function exportJson() {
     const data = JSON.stringify(rsvps, null, 2)
-    downloadFile(data, `rsvp-${new Date().toISOString().slice(0, 10)}.json`)
+    downloadFile(
+      data,
+      `rsvp-${eventId}-${new Date().toISOString().slice(0, 10)}.json`
+    )
   }
 
   async function clearAll() {
@@ -896,7 +945,7 @@ function PendingRow({
   onMarkNotAttending,
   submitting,
 }: {
-  group: (typeof guestGroups)[number]
+  group: GuestGroup
   onMarkNotAttending: (groupId: string) => void
   submitting: boolean
 }) {

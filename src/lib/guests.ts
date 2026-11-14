@@ -1,12 +1,19 @@
-import { guestGroups, type GuestGroup } from '../data/guestGroups'
+import { guestGroups, type EventId, type GuestGroup } from '../data/guestGroups'
+import { guestGroupsMT } from '../data/guestGroupsMT'
 import { normalize } from './normalize'
 
-export function searchGroups(query: string): GuestGroup[] {
+const allGroups: GuestGroup[] = [...guestGroups, ...guestGroupsMT]
+
+export function searchGroups(
+  query: string,
+  eventId?: EventId
+): GuestGroup[] {
   const q = normalize(query)
   if (q.length < 2) return []
 
+  const scope = eventId ? allGroups.filter((g) => g.eventId === eventId) : allGroups
   const tokens = q.split(/\s+/).filter(Boolean)
-  return guestGroups.filter((group) => {
+  return scope.filter((group) => {
     const haystack = [
       group.label,
       ...group.guests.flatMap((g) => [g.name, ...(g.nicknames || [])]),
@@ -18,7 +25,11 @@ export function searchGroups(query: string): GuestGroup[] {
 }
 
 export function findGroupById(id: string): GuestGroup | undefined {
-  return guestGroups.find((g) => g.id === id)
+  return allGroups.find((g) => g.id === id)
 }
 
-export { guestGroups }
+export function groupsByEvent(eventId: EventId): GuestGroup[] {
+  return allGroups.filter((g) => g.eventId === eventId)
+}
+
+export { guestGroups, guestGroupsMT }

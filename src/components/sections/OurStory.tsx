@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { SectionTitle } from '../ui/SectionTitle'
 import { storyEvents } from '../../data/story'
+import type { EventId } from '../../data/guestGroups'
 
 function CardImage({ src, emoji }: { src: string; emoji: string }) {
   const [error, setError] = useState(false)
@@ -29,7 +30,15 @@ function CardImage({ src, emoji }: { src: string; emoji: string }) {
   )
 }
 
-export function OurStory() {
+export function OurStory({ eventId }: { eventId?: EventId } = {}) {
+  const events = useMemo(
+    () =>
+      storyEvents.filter(
+        (e) => !e.landings || !eventId || e.landings.includes(eventId)
+      ),
+    [eventId]
+  )
+
   return (
     <section id="nossa-historia" className="py-24 md:py-32 px-6 bg-cream">
       <div className="max-w-5xl mx-auto">
@@ -44,7 +53,7 @@ export function OurStory() {
           <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-px bg-sage-light/30 -translate-x-px" />
 
           <div className="flex flex-col gap-12">
-            {storyEvents.map((event, index) => {
+            {events.map((event, index) => {
               // isRight=true  → card on LEFT side of timeline  → image on outer-left edge of card
               // isRight=false → card on RIGHT side of timeline → image on outer-right edge of card
               const isRight = index % 2 === 0

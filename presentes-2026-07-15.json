@@ -1,0 +1,28 @@
+[
+  {
+    "id": "eb7244a2-2622-4dba-8010-74d32524c24f",
+    "giverName": "teste",
+    "items": [
+      {
+        "title": "Café da manhã romano",
+        "amount": 80,
+        "wishId": 4
+      }
+    ],
+    "total": 80,
+    "submittedAt": "2026-07-14T15:00:00+00:00"
+  },
+  {
+    "id": "f2e1ea65-f2a9-4ce1-8a30-34fe608efb9f",
+    "giverName": "Marcia",
+    "items": [
+      {
+        "title": "Presente",
+        "amount": 500,
+        "wishId": -1
+      }
+    ],
+    "total": 500,
+    "submittedAt": "2026-06-19T15:00:00+00:00"
+  }
+]

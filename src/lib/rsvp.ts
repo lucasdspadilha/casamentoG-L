@@ -1,3 +1,5 @@
+import type { EventId } from '../data/guestGroups'
+
 export interface PreviousVersion {
   attending: 'yes' | 'no'
   attendingGuestIds: string[]
@@ -10,6 +12,7 @@ export interface PreviousVersion {
 
 export interface RsvpEntry {
   groupId: string
+  eventId?: EventId
   attending: 'yes' | 'no'
   attendingGuestIds: string[]
   plusOneName?: string
@@ -30,15 +33,18 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export async function getAllRsvps(): Promise<RsvpEntry[]> {
-  const res = await fetch('/api/rsvps', { credentials: 'include' })
+export async function getAllRsvps(eventId?: EventId): Promise<RsvpEntry[]> {
+  const qs = eventId ? `?eventId=${encodeURIComponent(eventId)}` : ''
+  const res = await fetch(`/api/rsvps${qs}`, { credentials: 'include' })
   return jsonOrThrow<RsvpEntry[]>(res)
 }
 
 export async function getRsvpByGroup(
-  groupId: string
+  groupId: string,
+  eventId?: EventId
 ): Promise<RsvpEntry | undefined> {
-  const res = await fetch(`/api/rsvps/${encodeURIComponent(groupId)}`, {
+  const qs = eventId ? `?eventId=${encodeURIComponent(eventId)}` : ''
+  const res = await fetch(`/api/rsvps/${encodeURIComponent(groupId)}${qs}`, {
     credentials: 'include',
   })
   if (res.status === 404) return undefined
@@ -52,6 +58,7 @@ export async function saveRsvp(entry: RsvpEntry): Promise<RsvpEntry> {
     credentials: 'include',
     body: JSON.stringify({
       groupId: entry.groupId,
+      eventId: entry.eventId,
       attending: entry.attending,
       attendingGuestIds: entry.attendingGuestIds,
       plusOneName: entry.plusOneName,

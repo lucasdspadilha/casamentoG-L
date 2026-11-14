@@ -1,6 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { supabase } from '../_lib/supabase.js'
 
+type EventId = 'casamento' | 'churrasco-mt'
+const VALID_EVENTS: EventId[] = ['casamento', 'churrasco-mt']
+const DEFAULT_EVENT: EventId = 'casamento'
+
 // Endpoint público — retorna apenas o resumo necessário pro modal de overwrite.
 // NÃO retorna phone, message, previousVersions (dados pessoais).
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -13,12 +17,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Invalid groupId' })
   }
 
+  const rawEvent = req.query.eventId
+  const eventId: EventId =
+    typeof rawEvent === 'string' && (VALID_EVENTS as string[]).includes(rawEvent)
+      ? (rawEvent as EventId)
+      : DEFAULT_EVENT
+
   const { data, error } = await supabase
     .from('rsvps')
     .select(
-      'group_id, attending, attending_guest_ids, plus_one_name, edit_count, submitted_at, set_by_admin'
+      'group_id, event_id, attending, attending_guest_ids, plus_one_name, edit_count, submitted_at, set_by_admin'
     )
     .eq('group_id', groupId)
+    .eq('event_id', eventId)
     .maybeSingle()
 
   if (error) return res.status(500).json({ error: error.message })
@@ -26,6 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   return res.status(200).json({
     groupId: data.group_id,
+    eventId: data.event_id ?? DEFAULT_EVENT,
     attending: data.attending,
     attendingGuestIds: data.attending_guest_ids ?? [],
     plusOneName: data.plus_one_name ?? undefined,

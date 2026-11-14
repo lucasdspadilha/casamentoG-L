@@ -1,0 +1,293 @@
+[
+  {
+    "groupId": "familia-alves-almeida",
+    "attending": "yes",
+    "attendingGuestIds": [
+      "alves-sonia",
+      "alves-sergio",
+      "alves-carol"
+    ],
+    "phone": "(11) 9 9418-3134",
+    "message": "Giulia e Lucas vovó deseja o mundo de felicidades pra vcs conte sempre comigo❤️😘🙏",
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-28T00:10:09.192+00:00",
+    "updatedAt": "2026-06-28T00:10:09.550408+00:00",
+    "setByAdmin": false
+  },
+  {
+    "groupId": "isabela-mageste",
+    "attending": "yes",
+    "attendingGuestIds": [
+      "isabela-mageste"
+    ],
+    "phone": "(11) 9 8185-4299",
+    "message": "Que linda a contagem da história de vocês. Fico tão feliz de ver o sim pra sempre acontecendo, sabendo que estava no dia que se conheceram. Que Jesus esteja a frente de vocês nessa nova etapa, abençoando e iluminando cada passo que derem. Amo muito vocês! 💖",
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-26T11:28:13.658+00:00",
+    "updatedAt": "2026-06-26T11:28:14.021257+00:00",
+    "setByAdmin": false
+  },
+  {
+    "groupId": "familia-businaro",
+    "attending": "yes",
+    "attendingGuestIds": [
+      "businaro-paula",
+      "businaro-felipe",
+      "businaro-aurora"
+    ],
+    "phone": "(11) 9 4228-4416",
+    "message": "Vocês são dois lindos e temos muito carinho por vocês. Prima, tenho muito orgulho da mulher que vc se tornou e da familia que está iniciando. Que Deus abençoe muito a vida de vocês e que essa união seja repleta de alegrias, conquistas e momentos maravilhosos. Beijos da familia Iezzi-Businaro 💚",
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-24T16:32:12.358+00:00",
+    "updatedAt": "2026-06-24T16:32:12.747372+00:00",
+    "setByAdmin": false
+  },
+  {
+    "groupId": "marcela-felipe",
+    "attending": "no",
+    "attendingGuestIds": [],
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-21T17:46:12.994+00:00",
+    "updatedAt": "2026-06-21T17:46:13.318047+00:00",
+    "setByAdmin": true
+  },
+  {
+    "groupId": "dudu",
+    "attending": "no",
+    "attendingGuestIds": [],
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-21T17:36:55.323+00:00",
+    "updatedAt": "2026-06-21T17:36:55.398062+00:00",
+    "setByAdmin": true
+  },
+  {
+    "groupId": "denis-luisa",
+    "attending": "no",
+    "attendingGuestIds": [],
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-21T17:36:41.759+00:00",
+    "updatedAt": "2026-06-21T17:36:42.082221+00:00",
+    "setByAdmin": true
+  },
+  {
+    "groupId": "eduardo-luci",
+    "attending": "no",
+    "attendingGuestIds": [],
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-21T17:36:34.374+00:00",
+    "updatedAt": "2026-06-21T17:36:34.703642+00:00",
+    "setByAdmin": true
+  },
+  {
+    "groupId": "emerson-josiely",
+    "attending": "no",
+    "attendingGuestIds": [],
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-21T17:36:22.99+00:00",
+    "updatedAt": "2026-06-21T17:36:23.108349+00:00",
+    "setByAdmin": true
+  },
+  {
+    "groupId": "dita-acompanhante",
+    "attending": "yes",
+    "attendingGuestIds": [
+      "dita",
+      "dita-plus-one"
+    ],
+    "plusOneName": "Maria Bispo",
+    "phone": "(11) 9 5739-8170",
+    "message": "Parabéns aos noivos te amo .",
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-20T18:43:10.819+00:00",
+    "updatedAt": "2026-06-20T18:43:11.184654+00:00",
+    "setByAdmin": false
+  },
+  {
+    "groupId": "familia-moutinho",
+    "attending": "yes",
+    "attendingGuestIds": [
+      "moutinho-carla",
+      "moutinho-ricardo",
+      "moutinho-malu"
+    ],
+    "phone": "(11) 9 8372-1076",
+    "message": "😔✊️ presença confirmada",
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-19T19:10:11.104+00:00",
+    "updatedAt": "2026-06-19T19:10:11.472957+00:00",
+    "setByAdmin": false
+  },
+  {
+    "groupId": "bruna-pedro-fotografo",
+    "attending": "yes",
+    "attendingGuestIds": [
+      "bruna-fotografa",
+      "pedro-fotografo"
+    ],
+    "phone": "(11) 9 7121-0435",
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-16T09:59:14.732+00:00",
+    "updatedAt": "2026-06-16T09:59:15.102041+00:00",
+    "setByAdmin": false
+  },
+  {
+    "groupId": "rafaella-david",
+    "attending": "yes",
+    "attendingGuestIds": [
+      "rafaella",
+      "david"
+    ],
+    "phone": "(11) 9 7500-2484",
+    "message": "Que lindo ver a história de vocês e fazer parte de um capítulo tão importante! É o começo de uma longa e linda jornada, que Deus sempre esteja com vocês e preserve o amor, parceria e respeito.\nAmo vocês, contem comigo e com o David para celebrar essa nova etapa 🤍",
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-15T12:54:56.102+00:00",
+    "updatedAt": "2026-06-15T12:54:56.446371+00:00",
+    "setByAdmin": false
+  },
+  {
+    "groupId": "familia-espindola-dias",
+    "attending": "yes",
+    "attendingGuestIds": [
+      "espindola-luana",
+      "espindola-rodrigo",
+      "espindola-alexia"
+    ],
+    "phone": "(11) 9 8237-5327",
+    "message": "Ansiosa por essa data tão linda e emocionante!!",
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-15T12:18:05.949+00:00",
+    "updatedAt": "2026-06-15T12:18:06.308699+00:00",
+    "setByAdmin": false
+  },
+  {
+    "groupId": "vagner-duda",
+    "attending": "yes",
+    "attendingGuestIds": [
+      "vagner",
+      "duda"
+    ],
+    "phone": "(67) 9 9298-4573",
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-14T18:55:45.761+00:00",
+    "updatedAt": "2026-06-14T18:55:46.147869+00:00",
+    "setByAdmin": false
+  },
+  {
+    "groupId": "camila-ze",
+    "attending": "yes",
+    "attendingGuestIds": [
+      "camila-z"
+    ],
+    "phone": "(11) 9 9971-3788",
+    "message": "Eu fico feliz demais de ter visto a trajetória desse casal lindo desde o início! Orgulho imenso de onde vocês chegaram, estou extremamente ansiosa por esse dia pra comemorar muito muito um amor tão lindo. Felicidades e bênçãos eternas pra vocês, meus Kelpos, amo vocês! ❤️ (Vou levar uma caixa de lencinho porque o que eu vou chorar é brincadeira kkkkkk)",
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-14T18:31:47.602+00:00",
+    "updatedAt": "2026-06-14T18:31:47.95385+00:00",
+    "setByAdmin": false
+  },
+  {
+    "groupId": "gabi-aytan",
+    "attending": "yes",
+    "attendingGuestIds": [
+      "gabi-muller",
+      "aytan"
+    ],
+    "phone": "(11) 9 9965-2008",
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-14T18:22:26.617+00:00",
+    "updatedAt": "2026-06-14T18:22:26.961122+00:00",
+    "setByAdmin": false
+  },
+  {
+    "groupId": "familia-miranda",
+    "attending": "yes",
+    "attendingGuestIds": [
+      "miranda-sandra",
+      "miranda-leandro",
+      "miranda-marcelo"
+    ],
+    "phone": "(11) 9 9648-7504",
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-14T18:10:23.053+00:00",
+    "updatedAt": "2026-06-14T18:10:23.395105+00:00",
+    "setByAdmin": false
+  },
+  {
+    "groupId": "familia-teixeira",
+    "attending": "yes",
+    "attendingGuestIds": [
+      "teixeira-karine",
+      "teixeira-ze",
+      "teixeira-henrique",
+      "teixeira-laura",
+      "teixeira-julia"
+    ],
+    "phone": "(11) 9 9116-4658",
+    "message": "Que sonho viver esse momento! Será especial e emocionante! Que vcs sejam muito felizes! Amamos vcs!",
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-14T18:05:35.18+00:00",
+    "updatedAt": "2026-06-21T17:47:13.805261+00:00",
+    "setByAdmin": false
+  },
+  {
+    "groupId": "charllote",
+    "attending": "yes",
+    "attendingGuestIds": [
+      "charllote"
+    ],
+    "phone": "(11) 9 9638-1644",
+    "message": "Mal posso esperar! Tudo de bom para vocês from now till forever 💞",
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-14T16:18:59.027+00:00",
+    "updatedAt": "2026-06-14T16:18:59.417318+00:00",
+    "setByAdmin": false
+  },
+  {
+    "groupId": "isabella-story",
+    "attending": "yes",
+    "attendingGuestIds": [
+      "isabella-story"
+    ],
+    "phone": "(11) 9 7177-0241",
+    "message": "CARALHOO MINHA MELHIR AMIGA VAI CASAR,NÃO ACREDITOO\nVOCÊS SAO MARAVILHOSOS, MEUS PAIS POSTIÇOS (O LUCAS N GOSTO TANTO ASSIM NE MAS VOU TER QUE ATURAR) KKK",
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-14T14:52:01.391+00:00",
+    "updatedAt": "2026-06-14T14:52:01.737566+00:00",
+    "setByAdmin": false
+  },
+  {
+    "groupId": "camila-danilo",
+    "attending": "yes",
+    "attendingGuestIds": [
+      "danilo",
+      "camila-d"
+    ],
+    "phone": "(11) 9 5654-0121",
+    "message": "Ta chegando uhul. Muitas felicidades ao casalzão. Amamos vocês!!",
+    "editCount": 0,
+    "previousVersions": [],
+    "submittedAt": "2026-06-14T14:48:57.284+00:00",
+    "updatedAt": "2026-06-14T14:48:57.902156+00:00",
+    "setByAdmin": false
+  }
+]

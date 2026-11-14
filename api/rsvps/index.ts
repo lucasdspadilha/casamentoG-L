@@ -2,8 +2,19 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { supabase } from '../_lib/supabase.js'
 import { getSessionUser, requireSessionUser } from '../_lib/session.js'
 
+type EventId = 'casamento' | 'churrasco-mt'
+const VALID_EVENTS: EventId[] = ['casamento', 'churrasco-mt']
+const DEFAULT_EVENT: EventId = 'casamento'
+
+function parseEventId(value: unknown): EventId {
+  return typeof value === 'string' && (VALID_EVENTS as string[]).includes(value)
+    ? (value as EventId)
+    : DEFAULT_EVENT
+}
+
 interface IncomingRsvp {
   groupId: string
+  eventId?: EventId
   attending: 'yes' | 'no'
   attendingGuestIds?: string[]
   plusOneName?: string
@@ -15,6 +26,7 @@ interface IncomingRsvp {
 interface DbRsvp {
   id: string
   group_id: string
+  event_id: EventId | null
   attending: 'yes' | 'no'
   attending_guest_ids: string[]
   plus_one_name: string | null
@@ -30,6 +42,7 @@ interface DbRsvp {
 function toApi(row: DbRsvp) {
   return {
     groupId: row.group_id,
+    eventId: row.event_id ?? DEFAULT_EVENT,
     attending: row.attending,
     attendingGuestIds: row.attending_guest_ids ?? [],
     plusOneName: row.plus_one_name ?? undefined,
@@ -48,10 +61,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const user = await requireSessionUser(req, res)
     if (!user) return
 
-    const { data, error } = await supabase
+    const eventFilter = req.query.eventId
+    const query = supabase
       .from('rsvps')
       .select('*')
       .order('submitted_at', { ascending: false })
+
+    if (typeof eventFilter === 'string' && (VALID_EVENTS as string[]).includes(eventFilter)) {
+      query.eq('event_id', eventFilter)
+    }
+
+    const { data, error } = await query
 
     if (error) return res.status(500).json({ error: error.message })
     return res.status(200).json((data as DbRsvp[]).map(toApi))
@@ -74,6 +94,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Invalid attendingGuestIds' })
     }
 
+    const eventId = parseEventId(body.eventId)
+
     // setByAdmin só vale se houver sessão admin ativa.
     // Convidado anônimo não pode forjar esse flag (fix #1 do code review).
     const sessionUser = await getSessionUser(req)
@@ -85,10 +107,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .from('rsvps')
       .select('*')
       .eq('group_id', body.groupId)
+      .eq('event_id', eventId)
       .maybeSingle()
 
     const newRow = {
       group_id: body.groupId,
+      event_id: eventId,
       attending: body.attending,
       attending_guest_ids: body.attendingGuestIds ?? [],
       plus_one_name: body.plusOneName?.trim() || null,
@@ -115,7 +139,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { data, error } = await supabase
       .from('rsvps')
-      .upsert(newRow, { onConflict: 'group_id' })
+      .upsert(newRow, { onConflict: 'group_id,event_id' })
       .select('*')
       .single()
 

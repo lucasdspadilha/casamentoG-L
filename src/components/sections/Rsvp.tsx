@@ -11,7 +11,7 @@ import {
 import { celebrate } from '../../lib/confetti'
 import { formatPhone, isValidPhone } from '../../lib/phone'
 import { useEscapeKey } from '../../lib/useEscapeKey'
-import type { GuestGroup } from '../../data/guestGroups'
+import type { EventId, GuestGroup } from '../../data/guestGroups'
 
 type Step = 'search' | 'group' | 'details' | 'success'
 
@@ -22,7 +22,19 @@ interface Details {
 
 const emptyDetails: Details = { phone: '', message: '' }
 
-export function Rsvp() {
+interface RsvpProps {
+  eventId: EventId
+  label?: string
+  title?: string
+  subtitle?: string
+}
+
+export function Rsvp({
+  eventId,
+  label = 'Até 10 de Agosto de 2026',
+  title = 'Confirmar Presença',
+  subtitle = 'Comece digitando seu nome ou o da família que vocês fazem parte.',
+}: RsvpProps) {
   const [step, setStep] = useState<Step>('search')
   const [query, setQuery] = useState('')
   const [groupId, setGroupId] = useState<string | null>(null)
@@ -34,7 +46,7 @@ export function Rsvp() {
   const [existingEntry, setExistingEntry] = useState<RsvpEntry | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  const results = useMemo(() => searchGroups(query), [query])
+  const results = useMemo(() => searchGroups(query, eventId), [query, eventId])
   const group = groupId ? findGroupById(groupId) : undefined
 
   function pickGroup(g: GuestGroup) {
@@ -71,6 +83,7 @@ export function Rsvp() {
       placeholder && finalIds.includes(placeholder.id) && plusOneName.trim().length > 0
     return {
       groupId: group!.id,
+      eventId: group!.eventId,
       attending: finalAttending,
       attendingGuestIds: finalAttending === 'yes' ? finalIds : [],
       plusOneName: hasPlusOne ? plusOneName.trim() : undefined,
@@ -85,7 +98,7 @@ export function Rsvp() {
     setSubmitting(true)
     const entry = buildEntry(finalAttending, finalIds)
     try {
-      const existing = await getRsvpByGroup(group.id)
+      const existing = await getRsvpByGroup(group.id, group.eventId)
       if (existing) {
         // Se foi o admin que pré-marcou, salva direto sem incomodar o convidado.
         // O histórico no admin ainda preserva a marcação original.
@@ -138,11 +151,7 @@ export function Rsvp() {
   return (
     <section id="rsvp" className="py-24 md:py-32 px-6 bg-cream-dark">
       <div className="max-w-xl mx-auto">
-        <SectionTitle
-          label="Até 10 de Agosto de 2026"
-          title="Confirmar Presença"
-          subtitle="Comece digitando seu nome ou o da família que vocês fazem parte."
-        />
+        <SectionTitle label={label} title={title} subtitle={subtitle} />
 
         <AnimatePresence mode="wait">
           {step === 'search' && (
